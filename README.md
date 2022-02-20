@@ -10,11 +10,9 @@ World Health Organisation            |  Exeter University
 :-------------------------:|:-------------------------:
 <img src="https://user-images.githubusercontent.com/22789869/154847763-87873b5d-94ca-4c46-8605-046ac6d5e9ef.png" style="height:200px;width:400px;display:inline-block;">  |      <img src="https://user-images.githubusercontent.com/22789869/154847776-2fa2b37f-8674-4ae0-8916-b965f2eadc1a.png" style="height:100px;width:400px;display:inline-block;">
 
-## How it works?
-### Methods Used
-* GIS
-* Machine Learning
-* Data Visualization
+## Paper
+<a href="https://rss.onlinelibrary.wiley.com/doi/full/10.1111/rssc.12227">A Hierarchical Approach to the Global Estimation of Exposures to Ambient Air Pollution - <i> (Shaddick et al 2017) </i></a>
+
 
 ### Tech stack
 
