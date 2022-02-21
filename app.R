@@ -35,29 +35,39 @@ ui = fluidPage(
         tabPanel(
             "Home",
             h1("Data Integration Model for Air Quality"),
-            globeOutput("maphp") %>% withSpinner(type = 6, color = "#009CDE"),
-            p(
-                "Estimation of global health risks from exposure to ambient air pollution requires a comprehensive set of air pollution exposure data covering all inhabited areas. The Data Integration Model for Air Quality (DIMAQ) – developed by the University of Exeter – has produced estimates based on data from ground measurements (see the Database on air quality)  together with information from other sources including data from satellite retrievals of aerosol optical depth and chemical transport models. It provides estimates of annual concentrations to PM2.5 at high spatial resolution (0.1° × 0.1°, which equates to approximately 11x11km at the equator) globally."
+            fluidRow(
+                column(
+                    8,
+                    align = "left",
+                    globeOutput("maphp") %>% withSpinner(type = 6, color = "#009CDE"),
+                ),
+                column(
+                    4,
+                    align = "left",
+                    p("DIMAQ was developed by the members of the Data Integration Task Force, a multi-disciplinary group of experts established as part of the recommendations from the first meeting of the WHO Global Platform for Air Quality in Geneva, January 2014. The resulting Data Integration Task Force consists of the first, fourth–ninth and 12th–16th authors of this paper together with members of the WHO (the 10th, 11th and 17th authors)."),
+                    h4("Paper"),
+                    a(
+                        href = "https://rss.onlinelibrary.wiley.com/doi/full/10.1111/rssc.12227",
+                        "A Hierarchical Approach to the Global Estimation of Exposures to Ambient Air Pollution"
+                    ),
+                    h4("Latest Data:"),
+                    downloadButton("downloadDataGP2016", "Gridded Predictions 2016"),
+                    br(),
+                    h4("Past Data:"),
+                    downloadButton("downloadDataGP2015", "Gridded Predictions 2015"),
+                    downloadButton("downloadDataGP2014", "Gridded Predictions 2014"),
+                    downloadButton("downloadDataGP2013", "Gridded Predictions 2013"),
+                    downloadButton("downloadDataGP2012", "Gridded Predictions 2012"),
+                    downloadButton("downloadDataGP2011", "Gridded Predictions 2011"),
+                    )
             ),
             h2("Modelled estimates of particulate matter air pollution"),
             p(
+                "Estimation of global health risks from exposure to ambient air pollution requires a comprehensive set of air pollution exposure data covering all inhabited areas. The Data Integration Model for Air Quality (DIMAQ) – developed by the University of Exeter – has produced estimates based on data from ground measurements (see the Database on air quality)  together with information from other sources including data from satellite retrievals of aerosol optical depth and chemical transport models. It provides estimates of annual concentrations to PM2.5 at high spatial resolution (0.1° × 0.1°, which equates to approximately 11x11km at the equator) globally."
+            ),
+            p(
                 "The sources of data include: Ground measurements from 9690 monitoring locations around the world, satellite remote sensing; population estimates; topography; and information on local monitoring networks and measures of specific contributors of air pollution from chemical transport models. Within DIMAQ, data from these sources are calibrated with ground measurements. The model provides estimates of air quality, expressed in terms of median concentrations of PM2.5, for all regions of the world, including areas in which PM2.5 monitoring is not available."
-            ),
-            h4("Methods"),
-            p("Detailed methods for Data Integration Model for Air Quality:"),
-            a(
-                href = "https://rss.onlinelibrary.wiley.com/doi/full/10.1111/rssc.12227",
-                "A Hierarchical Approach to the Global Estimation of Exposures to Ambient Air Pollution"
-            ),
-            h4("Latest Data:"),
-            downloadButton("downloadDataGP2016", "Gridded Predictions 2016"),
-            br(),
-            h4("Past Data:"),
-            downloadButton("downloadDataGP2015", "Gridded Predictions 2015"),
-            downloadButton("downloadDataGP2014", "Gridded Predictions 2014"),
-            downloadButton("downloadDataGP2013", "Gridded Predictions 2013"),
-            downloadButton("downloadDataGP2012", "Gridded Predictions 2012"),
-            downloadButton("downloadDataGP2011", "Gridded Predictions 2011"),
+            )
         ),
         tabPanel(
             "Temporal",
@@ -185,8 +195,8 @@ server = function(input, output, session) {
 
         # Colors for each level
         col = c("#0055ff","#00aaff","#00ffaa","#aaff00")[data$q]
-
-        globejs(lat = data$Latitude,long = data$Longitude,
+        globejs(
+                lat = data$Latitude,long = data$Longitude,
                 value = data$Mean,
                 color = col,
                 pointsize = 0.5,
@@ -195,15 +205,7 @@ server = function(input, output, session) {
 
     })
 
-    earth <- "http://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73909/world.topo.bathy.200412.3x5400x2700.jpg"
 
-    x = sample_n(grid_prediction %>% filter(Year == 2016) %>% select(),300000)
-    x= grid_prediction %>% filter(Year == 2016) %>% dplyr::select(Latitude,Longitude,Mean)
-    globejs(lat=x$Longitude, long=x$Longitude,
-            val=x$Mean,    # Bar height
-            color=col,
-            pointsize=0.5,
-            atmosphere=TRUE)
 
     output$map = renderPlotly({
         req(input$country)
