@@ -37,3 +37,4 @@ rsconnect/
 
 # dont upload raw-data
 /raw-data/
+/data/grid_prediction.RDS

@@ -4,7 +4,6 @@ library(tidyverse)
 library(viridis)
 library(bslib)
 library(sf) # For preserving spatial data
-library(leaflet) # For making maps
 library(DT) # For making fancy tables
 library(shinyWidgets)
 library(shinycssloaders)
@@ -12,6 +11,7 @@ library(plotly)
 r_colors = rgb(t(col2rgb(colors()) / 255))
 names(r_colors) = colors()
 #source("utils/load-data.r")
+grid_prediction = readRDS("data/grid_prediction.RDS")
 
 countries = as.list(unique(grid_prediction$CountryName))
 
@@ -31,17 +31,30 @@ ui = fluidPage(
                  h2("Modelled estimates of particulate matter air pollution"),
                  plotOutput("maphp") %>% withSpinner(type = 6, color = "#009CDE"),
                  p("The sources of data include: Ground measurements from 9690 monitoring locations around the world, satellite remote sensing; population estimates; topography; and information on local monitoring networks and measures of specific contributors of air pollution from chemical transport models. Within DIMAQ, data from these sources are calibrated with ground measurements. The model provides estimates of air quality, expressed in terms of median concentrations of PM2.5, for all regions of the world, including areas in which PM2.5 monitoring is not available."),
+                 h4("Methods"),
+                 p("Detailed methods for Data Integration Model for Air Quality:"),
+                 a(href = "https://rss.onlinelibrary.wiley.com/doi/full/10.1111/rssc.12227","A Hierarchical Approach to the Global Estimation of Exposures to Ambient Air Pollution"),
                  h4("Latest Data:"),
-                 downloadButton("downloadData", "Download 2016"),
+                 downloadButton("downloadDataGP2016", "Gridded Predictions 2016"),
                  br(),
                  h4("Past Data:"),
-                 downloadButton("downloadData", "Download 2015"),
-                 downloadButton("downloadData", "Download 2014"),
-                 downloadButton("downloadData", "Download 2013"),
-                 downloadButton("downloadData", "Download 2012"),
-                 downloadButton("downloadData", "Download 2011"),
+                 downloadButton("downloadDataGP2015", "Gridded Predictions 2015"),
+                 downloadButton("downloadDataGP2014", "Gridded Predictions 2014"),
+                 downloadButton("downloadDataGP2013", "Gridded Predictions 2013"),
+                 downloadButton("downloadDataGP2012", "Gridded Predictions 2012"),
+                 downloadButton("downloadDataGP2011", "Gridded Predictions 2011"),
                  ),
-        tabPanel("Temporal Data"),
+        tabPanel("Temporal Data",
+                 selectInput(inputId = "land-class",choices = unique(datT$UrbanRural), selected = "Overall"),
+                 selectizeInput(
+                     inputId = "country",
+                     label = "Select a country",
+                     choices = unique(datT$CountryName),
+                     selected = "Algeria",
+                     multiple = TRUE
+                 ),
+                 plotlyOutput(outputId = "p")
+                 ),
         tabPanel(
             "Spatial Mapping",
             fluidRow(
@@ -151,6 +164,14 @@ server = function(input, output, session) {
 
     output$hist = renderPlot({
 
+    })
+
+    output$p <- renderPlotly({
+
+        plot_ly(datT %>% filter(UrbanRural == input$land-class), x = ~Year, y = ~Percent, name = ~CountryName) %>%
+            filter(CountryName %in% input$country) %>%
+            group_by(CountryName) %>%
+            add_lines()
     })
 
     observe(session$setCurrentTheme(if (isTRUE(input$mode)) {
