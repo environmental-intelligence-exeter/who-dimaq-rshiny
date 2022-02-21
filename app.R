@@ -1,23 +1,8 @@
 ##################################################################
 ##                            Set-Up                            ##
 ##################################################################
-library(shiny)
-library(dplyr)
-library(viridis)
-library(bslib)
-library(sf) # For preserving spatial data
-library(DT) # For making fancy tables
-library(shinyWidgets)
-library(shinycssloaders)
-library(plotly)
-library(threejs)
 
-# vars
-grid_prediction = readRDS("data/grid_prediction.RDS")
-excceed = readRDS("data/exceed_10_15_25_35.RDS")
-concentration = readRDS("data/concentrations_exposure.RDS")
-countries = as.list(unique(grid_prediction$CountryName))
-
+source("utils/set-up.r")
 
 ##################################################################
 ##                              UI                              ##
@@ -211,8 +196,7 @@ server = function(input, output, session) {
         req(input$country)
         if (identical(input$country, ""))
             return(NULL)
-        p =
-            ggplot() + geom_tile(
+        p = ggplot() + geom_tile(
                 data = grid_prediction %>% filter(Year == input$year, CountryName == input$country),
                 aes(
                     x = Longitude,
@@ -225,9 +209,6 @@ server = function(input, output, session) {
         width = session$clientData$output_p_width
         ggplotly(p, height = height, width = width)
     })
-
-
-
 
     output$table = renderDataTable({
         data = grid_prediction %>% filter(Year == input$year, CountryName == input$country)
@@ -273,7 +254,6 @@ server = function(input, output, session) {
         )
     }))
 }
-
 
 #################################################################
 ##                            Build                            ##
