@@ -1,6 +1,7 @@
 # Set pkgs
 pkgs = c(
   "shiny",
+  "bslib",
   "dplyr",
   "viridis",
   "sf",

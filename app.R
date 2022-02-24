@@ -9,11 +9,9 @@ source("utils/set-up.r")
 ##################################################################
 ui = fluidPage(
     theme = bs_theme(
-        bg = "white",
-        fg = "#009CDE",
-        primary = "#009CDE",
-        secondary = "#009CDE",
-        base_font = font_google("Prompt")
+        bg = "#0b3d91", fg = "white", primary = "#FCC780",
+        base_font = font_google("Space Mono"),
+        code_font = font_google("Space Mono")
     ),
     navbarPage(
         "DIMAQ",
@@ -29,7 +27,10 @@ ui = fluidPage(
                 column(
                     4,
                     align = "left",
-                    p("DIMAQ was developed by the members of the Data Integration Task Force, a multi-disciplinary group of experts established as part of the recommendations from the first meeting of the WHO Global Platform for Air Quality in Geneva, January 2014. The resulting Data Integration Task Force consists of the first, fourth–ninth and 12th–16th authors of this paper together with members of the WHO (the 10th, 11th and 17th authors)."),
+                    br(),
+                    p(
+                        "DIMAQ was developed by the members of the Data Integration Task Force, a multi-disciplinary group of experts established as part of the recommendations from the first meeting of the WHO Global Platform for Air Quality in Geneva, January 2014. The resulting Data Integration Task Force consists of the first, fourth–ninth and 12th–16th authors of this paper together with members of the WHO (the 10th, 11th and 17th authors)."
+                    ),
                     h4("Paper"),
                     a(
                         href = "https://rss.onlinelibrary.wiley.com/doi/full/10.1111/rssc.12227",
@@ -37,14 +38,15 @@ ui = fluidPage(
                     ),
                     h4("Latest Data:"),
                     downloadButton("downloadDataGP2016", "Gridded Predictions 2016"),
+                    h4("R Package:"),
+                    code('install.package("dimaqdata")'),
                     br(),
-                    h4("Past Data:"),
-                    downloadButton("downloadDataGP2015", "Gridded Predictions 2015"),
-                    downloadButton("downloadDataGP2014", "Gridded Predictions 2014"),
-                    downloadButton("downloadDataGP2013", "Gridded Predictions 2013"),
-                    downloadButton("downloadDataGP2012", "Gridded Predictions 2012"),
-                    downloadButton("downloadDataGP2011", "Gridded Predictions 2011"),
-                    )
+                    tags$head(
+                        tags$style(
+                            ".butt{background-color:#add8e6;} .butt{color: #337ab7;margin-top:2%}"
+                        )
+                    ),
+                )
             ),
             h2("Modelled estimates of particulate matter air pollution"),
             p(
@@ -52,98 +54,115 @@ ui = fluidPage(
             ),
             p(
                 "The sources of data include: Ground measurements from 9690 monitoring locations around the world, satellite remote sensing; population estimates; topography; and information on local monitoring networks and measures of specific contributors of air pollution from chemical transport models. Within DIMAQ, data from these sources are calibrated with ground measurements. The model provides estimates of air quality, expressed in terms of median concentrations of PM2.5, for all regions of the world, including areas in which PM2.5 monitoring is not available."
-            )
+            ),
+            h2("Project Partners"),
+            fluidRow(
+                column(
+                    6,
+                    img(src="World_Health_Organization_logo.png", align = "left", height = 140, width = 400)
+                ),
+                column(
+                    6,
+                    img(src="University-of-Exeter-logo-1000x600.png", align = "right", height = 140, width = 400)
+                )
+            ),
+            br(),
+            h4("Past Data:"),
+            downloadButton("downloadDataGP2015", "Gridded Predictions 2015", class = "butt"),
+            downloadButton("downloadDataGP2014", "Gridded Predictions 2014", class = "butt"),
+            downloadButton("downloadDataGP2013", "Gridded Predictions 2013", class = "butt"),
+            downloadButton("downloadDataGP2012", "Gridded Predictions 2012", class = "butt"),
+            downloadButton("downloadDataGP2011", "Gridded Predictions 2011", class = "butt"),
         ),
         tabPanel(
             "Temporal",
-            fluidRow(column(
-                4,
-                selectInput(
-                    inputId = "scale",
-                    choices = unique(excceed$Scale),
-                    selected = "10",
-                    label = "Scale"
-                )
-            ),
-            column(
-                4,
-                selectInput(
-                    inputId = "cat",
-                    choices = unique(excceed$Category),
-                    selected = "Country",
-                    label = "Category"
-                )
-            ),
-            column(
-                4,
-                selectInput(
-                    inputId = "landclass",
-                    choices = unique(excceed$UrbanRural),
-                    selected = "Overall",
-                    label = "Urban | Rural"
-                )
-            )
-            ),
             fluidRow(
-            column(
+                column(
+                    4,
+                    selectInput(
+                        inputId = "scale",
+                        choices = unique(excceed$Scale),
+                        selected = "10",
+                        label = "Scale"
+                    )
+                ),
+                column(
+                    4,
+                    selectInput(
+                        inputId = "cat",
+                        choices = unique(excceed$Category),
+                        selected = "Country",
+                        label = "Category"
+                    )
+                ),
+                column(
+                    4,
+                    selectInput(
+                        inputId = "landclass",
+                        choices = unique(excceed$UrbanRural),
+                        selected = "Overall",
+                        label = "Urban | Rural"
+                    )
+                )
+            ),
+            fluidRow(column(
                 12,
                 align = "center",
                 selectizeInput(
                     inputId = "countryex",
                     label = "Select a country",
                     choices = unique(excceed$ID),
-                    selected = sample(countries,1),
+                    selected = sample(countries, 1),
                     multiple = TRUE
                 ),
             )),
             plotlyOutput(outputId = "p")
         ),
-        tabPanel(
-            "Spatial",
-            fluidRow(
-                column(
-                    6,
-                    align = "center",
-                    selectInput(
-                        inputId = "country",
-                        label = "Search for a country",
-                        choices = countries,
-                        selected = sample(countries, 1)
+        tabPanel("Spatial",
+                 fluidRow(
+                     column(
+                         6,
+                         align = "center",
+                         selectInput(
+                             inputId = "country",
+                             label = "Search for a country",
+                             choices = countries,
+                             selected = sample(countries, 1)
 
-                    )
-                ),
+                         )
+                     ),
 
-                column(
-                    6,
-                    align = "center",
-                    selectInput(
-                        inputId = "year",
-                        label = "Select a Year",
-                        choices = 2011:2016
-                    )
-                )
-                # ,
-                # column(
-                #     2,
-                #     materialSwitch(
-                #         inputId = "mode",
-                #         label = icon("moon"),
-                #         right = TRUE,
-                #         status = "success"
-                #     )
-                # )
+                     column(
+                         6,
+                         align = "center",
+                         selectInput(
+                             inputId = "year",
+                             label = "Select a Year",
+                             choices = 2011:2016
+                         )
+                     )
+                     # ,
+                     # column(
+                     #     2,
+                     #     materialSwitch(
+                     #         inputId = "mode",
+                     #         label = icon("moon"),
+                     #         right = TRUE,
+                     #         status = "success"
+                     #     )
+                     # )
 
-            ),
-            fluidRow(
-                column(
-                    12,
-                    align = "center",
-                    plotlyOutput("map") %>% withSpinner(type = 6, color = "#009CDE"),
-                    dataTableOutput("table")
-                )
-            ),
-
-        ),
+                 ),
+                 fluidRow(
+                     column(
+                         12,
+                         align = "center",
+                         plotlyOutput("map") %>% withSpinner(type = 6, color = "#009CDE"),
+                         dataTableOutput("table")
+                     )
+                 ),),
+        br(),
+        br(),
         tags$footer(
             HTML(
                 "
@@ -151,7 +170,7 @@ ui = fluidPage(
                            <footer class='page-footer font-large indigo'>
                            <!-- Copyright -->
                            <a  style='text-align:centre !important;color:white !important' href='https://mdbootstrap.com/education/bootstrap/
-                           <div style=';background-color:#009CDE;'>'> Made by the Enviromental Inteligence Lab </br> Exeter University</a>
+                           <div style=';background-color:#009CDE;'><p style='text-align:center;'> Built by the Enviromental Inteligence Lab </br> Exeter University </p></a>
                            </div>
                            <!-- Copyright -->
                            </footer>
@@ -173,23 +192,25 @@ server = function(input, output, session) {
             select(Latitude, Longitude, Mean) %>%
             sample_n(30000)
 
-        data$q <- as.numeric(
-            cut(data$Mean,
-                breaks=quantile(data$Mean, probs=c(0,0.90,0.95,0.99,1)),
-                include.lowest=TRUE))
+        data$q <- as.numeric(cut(
+            data$Mean,
+            breaks = quantile(data$Mean, probs = c(0, 0.90, 0.95, 0.99, 1)),
+            include.lowest = TRUE
+        ))
 
         # Colors for each level
-        col = c("#0055ff","#00aaff","#00ffaa","#aaff00")[data$q]
+        col = c("#0055ff", "#00aaff", "#00ffaa", "#aaff00")[data$q]
         globejs(
-                lat = data$Latitude,long = data$Longitude,
-                value = data$Mean,
-                color = col,
-                pointsize = 0.5,
-                atmosphere = TRUE,
-                bg = "white")
+            lat = data$Latitude,
+            long = data$Longitude,
+            value = data$Mean,
+            color = col,
+            pointsize = 0.5,
+            atmosphere = TRUE,
+            bg = "#0b3d91"
+        )
 
     })
-
 
 
     output$map = renderPlotly({
@@ -197,14 +218,14 @@ server = function(input, output, session) {
         if (identical(input$country, ""))
             return(NULL)
         p = ggplot() + geom_tile(
-                data = grid_prediction %>% filter(Year == input$year, CountryName == input$country),
-                aes(
-                    x = Longitude,
-                    y = Latitude,
-                    fill = Mean
-                )
-            ) + theme_bw() + theme(panel.grid.major = element_blank(),
-                                   panel.grid.minor = element_blank())
+            data = grid_prediction %>% filter(Year == input$year, CountryName == input$country),
+            aes(
+                x = Longitude,
+                y = Latitude,
+                fill = Mean
+            )
+        ) + theme_bw() + theme(panel.grid.major = element_blank(),
+                               panel.grid.minor = element_blank())
         height = session$clientData$output_p_height
         width = session$clientData$output_p_width
         ggplotly(p, height = height, width = width)
@@ -235,22 +256,24 @@ server = function(input, output, session) {
     })
 
     observe({
-        updateSelectInput(session, "countryex", choices =  excceed %>% filter(
-            UrbanRural == input$landclass,
-            Category == input$cat,
-            Scale == input$scale
-        ) %>% dplyr::select(ID))
+        updateSelectInput(
+            session,
+            "countryex",
+            choices =  excceed %>% filter(
+                UrbanRural == input$landclass,
+                Category == input$cat,
+                Scale == input$scale
+            ) %>% dplyr::select(ID)
+        )
     })
 
     observe(session$setCurrentTheme(if (isTRUE(input$mode)) {
         bs_theme(bootswatch = "superhero")
     } else {
         bs_theme(
-            bg = "white",
-            fg = "#009CDE",
-            primary = "#009CDE",
-            secondary = "#009CDE",
-            base_font = font_google("Prompt")
+            bg = "#0b3d91", fg = "white", primary = "#FCC780",
+            base_font = font_google("Space Mono"),
+            code_font = font_google("Space Mono")
         )
     }))
 }
