@@ -16,7 +16,6 @@ World Health Organisation            |  Exeter University
 
 ### Tech stack
 
-- Vanilla JS (For all things web)
 - RShiny
 - Bslib
 - SF
