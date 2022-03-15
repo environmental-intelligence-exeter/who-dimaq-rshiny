@@ -1,6 +1,3 @@
-# sidebar layout
-#
-
 ##################################################################
 ##                            Set-Up                            ##
 ##################################################################
@@ -12,11 +9,9 @@ source("utils/set-up.r")
 ##################################################################
 ui = fluidPage(
     theme = bs_theme(
-        bg = "#0b3d91",
-        fg = "white",
-        primary = "#FCC780",
-        base_font = font_google("Space Mono"),
-        code_font = font_google("Space Mono")
+        bg = "white", fg = "white", primary = "#FCC780",
+        base_font = font_google("Open Sans"),
+        code_font = font_google("Open Sans")
     ),
     navbarPage(
         "DIMAQ",
@@ -61,24 +56,16 @@ ui = fluidPage(
                 "The sources of data include: Ground measurements from 9690 monitoring locations around the world, satellite remote sensing; population estimates; topography; and information on local monitoring networks and measures of specific contributors of air pollution from chemical transport models. Within DIMAQ, data from these sources are calibrated with ground measurements. The model provides estimates of air quality, expressed in terms of median concentrations of PM2.5, for all regions of the world, including areas in which PM2.5 monitoring is not available."
             ),
             h2("Project Partners"),
-            fluidRow(column(
-                6,
-                img(
-                    src = "World_Health_Organization_logo.png",
-                    align = "left",
-                    height = 140,
-                    width = 400
+            fluidRow(
+                column(
+                    6,
+                    img(src="World_Health_Organization_logo.png", align = "left", height = 140, width = 400)
+                ),
+                column(
+                    6,
+                    img(src="University-of-Exeter-logo-1000x600.png", align = "right", height = 140, width = 400)
                 )
             ),
-            column(
-                6,
-                img(
-                    src = "University-of-Exeter-logo-1000x600.png",
-                    align = "right",
-                    height = 140,
-                    width = 400
-                )
-            )),
             br(),
             h4("Past Data:"),
             downloadButton("downloadDataGP2015", "Gridded Predictions 2015", class = "butt"),
@@ -87,26 +74,63 @@ ui = fluidPage(
             downloadButton("downloadDataGP2012", "Gridded Predictions 2012", class = "butt"),
             downloadButton("downloadDataGP2011", "Gridded Predictions 2011", class = "butt"),
         ),
-        tabPanel("Exposures",
+        # tabPanel(
+        #     "Temporal",
+        #     fluidRow(
+        #         column(
+        #             4,
+        #             selectInput(
+        #                 inputId = "scale",
+        #                 choices = unique(excceed$Scale),
+        #                 selected = "10",
+        #                 label = "Scale"
+        #             )
+        #         ),
+        #         column(
+        #             4,
+        #             selectInput(
+        #                 inputId = "cat",
+        #                 choices = unique(excceed$Category),
+        #                 selected = "Country",
+        #                 label = "Category"
+        #             )
+        #         ),
+        #         column(
+        #             4,
+        #             selectInput(
+        #                 inputId = "landclass",
+        #                 choices = unique(excceed$UrbanRural),
+        #                 selected = "Overall",
+        #                 label = "Urban | Rural"
+        #             )
+        #         )
+        #     ),
+        #     fluidRow(column(
+        #         12,
+        #         align = "center",
+        #         selectizeInput(
+        #             inputId = "countryex",
+        #             label = "Select a country",
+        #             choices = unique(excceed$ID),
+        #             selected = sample(countries, 1),
+        #             multiple = TRUE
+        #         ),
+        #     )),
+        #     plotlyOutput(outputId = "p")
+        # ),
+
+        tabPanel("Exceedances",
+                 titlePanel("Exceedances"),
+                 p("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"),
+                 br(),
                  sidebarLayout(
+
                      sidebarPanel(
-                         selectInput(
-                             inputId = "scale",
-                             choices = unique(excceed$Scale),
-                             selected = "10",
-                             label = "Scale"
-                         ),
                          selectInput(
                              inputId = "cat",
                              choices = unique(excceed$Category),
                              selected = "Country",
-                             label = "Category"
-                         ),
-                         selectInput(
-                             inputId = "landclass",
-                             choices = unique(excceed$UrbanRural),
-                             selected = "Overall",
-                             label = "Urban | Rural"
+                             label = "Country or Region"
                          ),
                          selectizeInput(
                              inputId = "countryex",
@@ -114,29 +138,6 @@ ui = fluidPage(
                              choices = unique(excceed$ID),
                              selected = sample(countries, 1),
                              multiple = TRUE
-                         )
-                     ),
-                     mainPanel(tabsetPanel(
-                         type = "tabs",
-                         tabPanel("Plot", plotlyOutput(outputId = "p")),
-                         tabPanel("Map", plotOutput("plot")),
-                         tabPanel("Data", plotOutput("plot"))
-                     ))
-                 )),
-        tabPanel("Concentrations",
-                 sidebarLayout(
-                     sidebarPanel(
-                         selectInput(
-                             inputId = "scale",
-                             choices = unique(excceed$Scale),
-                             selected = "10",
-                             label = "Scale"
-                         ),
-                         selectInput(
-                             inputId = "cat",
-                             choices = unique(excceed$Category),
-                             selected = "Country",
-                             label = "Category"
                          ),
                          selectInput(
                              inputId = "landclass",
@@ -144,21 +145,20 @@ ui = fluidPage(
                              selected = "Overall",
                              label = "Urban | Rural"
                          ),
-                         selectizeInput(
-                             inputId = "countryex",
-                             label = "Select a country",
-                             choices = unique(excceed$ID),
-                             selected = sample(countries, 1),
-                             multiple = TRUE
+                         selectInput(
+                             inputId = "scale",
+                             choices = unique(excceed$Scale),
+                             selected = "10",
+                             label = "Scale"
                          )
                      ),
-                     mainPanel(tabsetPanel(
-                         type = "tabs",
-                         tabPanel("Plot", plotlyOutput(outputId = "p")),
-                         tabPanel("Map", plotOutput("plot")),
-                         tabPanel("Data", plotOutput("plot"))
-                     ))
-                 )),
+
+                     # Show a plot of the generated distribution
+                     mainPanel(
+                        plotlyOutput(outputId =  "p") %>% withSpinner(type = 6, color = "#009CDE")
+                     )
+                 )
+                 ),
         tabPanel("Spatial",
                  fluidRow(
                      column(
@@ -201,7 +201,7 @@ ui = fluidPage(
                          plotlyOutput("map") %>% withSpinner(type = 6, color = "#009CDE"),
                          dataTableOutput("table")
                      )
-                 ), ),
+                 ),),
         br(),
         br(),
         tags$footer(
@@ -226,21 +226,21 @@ ui = fluidPage(
 ##################################################################
 
 server = function(input, output, session) {
-    # Homepage globe
+    # Reactive value for selected dataset ----
+
     output$maphp = renderGlobe({
         data = grid_prediction %>% dplyr::filter(Year == 2016) %>%
-            select(Latitude, Longitude, Mean) %>%
+            dplyr::select(Latitude, Longitude, Mean) %>%
             sample_n(30000)
 
-        # quartiles
-        data$q = as.numeric(cut(
+        data$q <- as.numeric(cut(
             data$Mean,
             breaks = quantile(data$Mean, probs = c(0, 0.90, 0.95, 0.99, 1)),
             include.lowest = TRUE
         ))
+
         # Colors for each level
         col = c("#0055ff", "#00aaff", "#00ffaa", "#aaff00")[data$q]
-        #plot
         globejs(
             lat = data$Latitude,
             long = data$Longitude,
@@ -253,7 +253,7 @@ server = function(input, output, session) {
 
     })
 
-    # Gridded priditions grid map
+
     output$map = renderPlotly({
         req(input$country)
         if (identical(input$country, ""))
@@ -272,7 +272,6 @@ server = function(input, output, session) {
         ggplotly(p, height = height, width = width)
     })
 
-    # gridded priddiction table
     output$table = renderDataTable({
         data = grid_prediction %>% filter(Year == input$year, CountryName == input$country)
         datatable(data,
@@ -281,24 +280,7 @@ server = function(input, output, session) {
 
     })
 
-    # Exposures plot
     output$p = renderPlotly({
-        plot_ly(
-            excceed %>% filter(
-                UrbanRural == input$landclass,
-                Category == input$cat,
-                Scale == input$scale
-            ),
-            x = ~ Year,
-            y = ~ Value,
-            name = ~ ID
-        ) %>%
-            filter(ID %in% input$countryex) %>%
-            group_by(ID) %>%
-            add_lines()
-    })
-
-    output$concentrations = renderPlotly({
         plot_ly(
             excceed %>% filter(
                 UrbanRural == input$landclass,
@@ -326,15 +308,30 @@ server = function(input, output, session) {
         )
     })
 
+    observe({
+        cat <- input$cat
+
+        # Can use character(0) to remove all choices
+        if (cat== "Country"){
+            # Can also set the label and select items
+            updateSelectInput(session, "countryex",
+                              label = paste("Select Country"))
+        } else {
+            updateSelectInput(session, "countryex",
+                              label = paste("Select Region"))
+        }
+
+
+
+    })
+
     observe(session$setCurrentTheme(if (isTRUE(input$mode)) {
         bs_theme(bootswatch = "superhero")
     } else {
         bs_theme(
-            bg = "#0b3d91",
-            fg = "white",
-            primary = "#FCC780",
-            base_font = font_google("Space Mono"),
-            code_font = font_google("Space Mono")
+            bg = "#0b3d91", fg = "white", primary = "#FCC780",
+            base_font = font_google("Open Sans"),
+            code_font = font_google("Open Sans")
         )
     }))
 }

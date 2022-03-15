@@ -275,4 +275,10 @@ saveRDS(grid_prediction, "data/grid_prediction.RDS")
 ##                          Shapefiles                          ## done
 ##################################################################
 
-#load("raw-data/Shapefiles/shapefiles.RData")
+load("raw-data/Shapefiles/shapefiles.RData")
+grid_prediction = st_as_sf(grid_prediction, coords = c("Longitude", "Latitude"), crs = 4326)
+library(raster)
+data =grid_prediction %>% dplyr::filter(Year == 2015) %>% dplyr::select(Longitude,Latitude,Mean) %>% rasterFromXYZ()
+  ggplot(data, aes(Longitude, Latitude, fill = Mean)) +
+    geom_raster() %>%
+  theme_dark()
