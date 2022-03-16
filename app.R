@@ -9,7 +9,7 @@ source("utils/set-up.r")
 ##################################################################
 ui = fluidPage(
     theme = bs_theme(
-        bg = "white", fg = "white", primary = "#FCC780",
+        bg = "#FCC780", fg = "black", primary = "#FCC780",
         base_font = font_google("Open Sans"),
         code_font = font_google("Open Sans")
     ),
@@ -74,51 +74,6 @@ ui = fluidPage(
             downloadButton("downloadDataGP2012", "Gridded Predictions 2012", class = "butt"),
             downloadButton("downloadDataGP2011", "Gridded Predictions 2011", class = "butt"),
         ),
-        # tabPanel(
-        #     "Temporal",
-        #     fluidRow(
-        #         column(
-        #             4,
-        #             selectInput(
-        #                 inputId = "scale",
-        #                 choices = unique(excceed$Scale),
-        #                 selected = "10",
-        #                 label = "Scale"
-        #             )
-        #         ),
-        #         column(
-        #             4,
-        #             selectInput(
-        #                 inputId = "cat",
-        #                 choices = unique(excceed$Category),
-        #                 selected = "Country",
-        #                 label = "Category"
-        #             )
-        #         ),
-        #         column(
-        #             4,
-        #             selectInput(
-        #                 inputId = "landclass",
-        #                 choices = unique(excceed$UrbanRural),
-        #                 selected = "Overall",
-        #                 label = "Urban | Rural"
-        #             )
-        #         )
-        #     ),
-        #     fluidRow(column(
-        #         12,
-        #         align = "center",
-        #         selectizeInput(
-        #             inputId = "countryex",
-        #             label = "Select a country",
-        #             choices = unique(excceed$ID),
-        #             selected = sample(countries, 1),
-        #             multiple = TRUE
-        #         ),
-        #     )),
-        #     plotlyOutput(outputId = "p")
-        # ),
-
         tabPanel("Exceedances",
                  titlePanel("Exceedances"),
                  p("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"),
@@ -154,9 +109,7 @@ ui = fluidPage(
                      ),
 
                      # Show a plot of the generated distribution
-                     mainPanel(
-                        plotlyOutput(outputId =  "p") %>% withSpinner(type = 6, color = "#009CDE")
-                     )
+                     mainPanel(plotlyOutput(outputId =  "p") %>% withSpinner(type = 6, color = "#009CDE"))
                  )
                  ),
         tabPanel("Spatial",
@@ -211,7 +164,7 @@ ui = fluidPage(
                            <footer class='page-footer font-large indigo'>
                            <!-- Copyright -->
                            <a  style='text-align:centre !important;color:white !important' href='https://mdbootstrap.com/education/bootstrap/
-                           <div style=';background-color:#009CDE;'><p style='text-align:center;'> Built by the Enviromental Inteligence Lab </br> Exeter University </p></a>
+                           <div style=';background-color:#009CDE;'><p style='text-align:center;'> Built by the Environmental Intelligence CDT </br> Exeter University </p></a>
                            </div>
                            <!-- Copyright -->
                            </footer>
