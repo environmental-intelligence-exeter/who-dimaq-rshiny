@@ -2,7 +2,7 @@
 ##                            Set-Up                            ##
 ##################################################################
 
-source("utils/set-up.r")
+#source("utils/set-up.r")
 
 ##################################################################
 ##                              UI                              ##
@@ -126,7 +126,55 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
                                         )
                                     )
                                     ),
-                           tabPanel("Global & Regional pm2.5 Exceedances")),
+                           tabPanel("Global & Regional pm2.5 Exceedances",
+                                    titlePanel("Global & Regional pm2.5 Exceedances"),
+                                    p("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"),
+                                    br(),
+                                    sidebarLayout(
+                                        #  Inputs excluded for brevity
+                                        sidebarPanel(
+                                            selectInput(
+                                                inputId = "cat_conc",
+                                                choices = unique(concentration$Category),
+                                                selected = "Unweighted WHO Region",
+                                                label = "Country or Region"
+                                            ),
+                                            selectizeInput(
+                                                inputId = "country_conc",
+                                                label = "Select a country",
+                                                choices = unique(concentration$byvar),
+                                                selected = "AFRO",
+                                                multiple = TRUE
+                                            ),
+                                            selectInput(
+                                                inputId = "landclass_conc",
+                                                choices = unique(concentration$UrbanRural),
+                                                selected = "Overall",
+                                                label = "Urban | Rural"
+                                            ),
+                                            selectInput(
+                                                inputId = "type_conc",
+                                                choices = unique(concentration$Type),
+                                                selected = "Population-weighted concentration",
+                                                label = "Type"
+                                            ),
+                                            downloadButton("datadownloadex", "Download Data", class = "butt")
+
+
+                                        ),
+
+                                        mainPanel(
+                                            tabsetPanel(
+                                                tabPanel("Prediction Interval", plotOutput("conc_graph_ci")),
+                                                tabPanel("Confidence Interval", plotOutput("conc_graph_pi")),
+                                                tabPanel("Table", dataTableOutput("conc_table"))
+
+                                            )
+                                        )
+                                    )
+
+                                    ),
+                           ),
                 navbarMenu("Spatial Data",
                            tabPanel("Gridded Prediction Data"),
                            tabPanel("Ground Monitor Data")),
@@ -236,7 +284,6 @@ server = function(input, output, session) {
     })
 
 
-
     observe({
         updateSelectInput(
             session,
@@ -248,6 +295,49 @@ server = function(input, output, session) {
             ) %>% dplyr::select(ID)
         )
     })
+    #####
+
+    output$conc_graph_ci = renderPlot({
+      ggplot(concentration %>% dplyr::filter(byvar == input$country_conc) %>% dplyr::filter(Category == input$cat_conc) %>%
+                    dplyr::filter(Type == input$type_conc) %>% dplyr::filter(UrbanRural == input$landclass_conc), aes(Year, Mean)) +        # ggplot2 plot with confidence intervals
+            geom_point() +
+            geom_errorbar(aes(ymin = LowerCI, ymax = UpperCI))
+
+
+    })
+
+    output$conc_table =  renderDataTable({
+        concentration_data =   concentration %>% filter(
+            UrbanRural == input$landclass_conc,
+            Category == input$cat_conc,
+            Type == input$type_conc
+        ) %>% filter(byvar %in% input$country_conc) %>%
+            group_by(byvar)
+        datatable(concentration_data,
+                  options = list(scrollX = TRUE),
+                  escape = FALSE)
+
+    })
+
+    output$conc_graph_pi = renderPlot({
+        ggplot(concentration %>% dplyr::filter(byvar == input$country_conc) %>% dplyr::filter(Category == input$cat_conc) %>%
+                   dplyr::filter(Type == input$type_conc) %>% dplyr::filter(UrbanRural == input$landclass_conc), aes(Year, Mean)) +        # ggplot2 plot with confidence intervals
+            geom_point() +
+            geom_errorbar(aes(ymin = LowerPI, ymax = UpperPI))
+
+
+    })
+    # observe({
+    #     updateSelectInput(
+    #         session,
+    #         "country_conc",
+    #         choices =  concentration%>% filter(
+    #             UrbanRural == input$landclass_conc,
+    #             Category == input$cat_conc,
+    #             Type == input$type_conc
+    #         ) %>% dplyr::select(byvar)
+    #     )
+    # })
 
     observe({
         cat <- input$cat
@@ -259,6 +349,23 @@ server = function(input, output, session) {
                               label = paste("Select Country"))
         } else {
             updateSelectInput(session, "countryex",
+                              label = paste("Select Region"))
+        }
+
+
+
+    })
+
+    observe({
+        cat_conc <- input$cat
+
+        # Can use character(0) to remove all choices
+        if (cat_conc== "Country"){
+            # Can also set the label and select items
+            updateSelectInput(session, "country_conc",
+                              label = paste("Select Country"))
+        } else {
+            updateSelectInput(session, "country_conc",
                               label = paste("Select Region"))
         }
 
@@ -443,3 +550,43 @@ shinyApp(ui, server)
 #     )
 # )
 
+#     ggplot() + geom_tile(
+#         data = grid_prediction %>% dplyr::filter(Year == 2011)
+#         aes(
+#             x = Longitude,
+#             y = Latitude,
+#             fill = Mean
+#         )
+#     ) + theme_bw() + theme(panel.grid.major = element_blank(),
+#                            panel.grid.minor = element_blank())
+#
+#
+#     geom_tile(
+#         data = grid_prediction %>% filter(Year == input$year, CountryName == input$country),
+#         aes(
+#             x = Longitude,
+#             y = Latitude,
+#             fill = Mean
+#         )
+#     ) + theme_bw() + theme(panel.grid.major = element_blank(),
+#                            panel.grid.minor = element_blank())
+#
+#     data
+# plot_ly(canada, split = ~name, color = ~provnum_ne)
+#
+# leaflet() %>%
+#     addProviderTiles(provider =) %>%
+#     addGlPoints(data = st_as_sf(grid_prediction, coords = c("Latitude","Longitude")) %>% dplyr::filter(Year == 2011, CountryName == "Algeria"), group = "Mean", fillColor = "Mean") %>%
+#     addLayersControl(overlayGroups = "Mean")
+#
+#
+# leaflet(options = leafletOptions(worldCopyJump = F, crs = "EPSG:4326")) %>% addTiles() %>%
+#     addRasterImage(r, colors = pal, opacity = 0.8) %>%
+#     addLegend(pal = pal, values = values(r),
+#               title = "Surface temp")
+#
+# library(raster)
+#     r = raster::rasterFromXYZ(grid_prediction %>% dplyr::filter(Year == 2011) %>% dplyr::select("Latitude", "Longitude", "Mean"))
+#
+# leaflet() %>% addProviderTiles( providers$CartoDB.DarkMatter) %>%
+#     addRasterImage(r, colors = pal, opacity = 0.5)
