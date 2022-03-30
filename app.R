@@ -2,7 +2,7 @@
 ##                            Set-Up                            ##
 ##################################################################
 
-#source("utils/set-up.r")
+source("utils/set-up.r")
 
 ##################################################################
 ##                              UI                              ##
@@ -176,7 +176,18 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
                                     ),
                            ),
                 navbarMenu("Spatial Data",
-                           tabPanel("Gridded Prediction Data"),
+                           tabPanel("Gridded Prediction Data",
+                                    sidebarLayout(
+                                      selectInput(
+                                        inputId = "ground_year",
+                                        choices = unique(ground_monitors$Year),
+                                        selected = "2011",
+                                        label = "Select a year"
+                                      ),
+
+                                    mainPanel(leafglOutput("ground_monitor_map"))
+                                    )
+                                    ),
                            tabPanel("Ground Monitor Data")),
                     tags$footer(
                         HTML(
@@ -325,6 +336,23 @@ server = function(input, output, session) {
             geom_point() +
             geom_errorbar(aes(ymin = LowerPI, ymax = UpperPI))
 
+
+    })
+
+    output$ground_monitor_map = renderLeafgl({
+      ground_monitors = st_as_sf(ground_monitors %>%
+                                   dplyr::filter(Year == input$ground_year), coords = c("Longitude","Latitude"))
+
+      leaflet(who_world_map) %>%
+        addProviderTiles(provider = providers$Stamen.TerrainBackground) %>%
+        addPolygons(    stroke=TRUE,
+                        fillOpacity = 0.3,
+                        color="black",
+                        weight=0.5) %>%
+        addGlPoints(data = ground_monitors,
+                    color = "blues",
+                    group = "PM25",
+                    popup = c("CountryName","StationID","PM25"))
 
     })
     # observe({

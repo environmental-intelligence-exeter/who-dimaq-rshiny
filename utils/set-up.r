@@ -10,7 +10,9 @@ pkgs = c(
   "shinyWidgets",
   "shinycssloaders",
   "plotly",
-  "threejs"
+  "threejs",
+  "leaflet",
+  "leafgl"
 )
 
 # Install pkgs not yet installed
@@ -29,5 +31,6 @@ concentration = readRDS("data/concentrations.rds")
 who_world_map = readRDS("data/who_world_map.rds")
 ground_monitors = readRDS(("data/ground_monitor.rds"))
 countries = as.list(unique(grid_prediction$CountryName))
+
 
 
