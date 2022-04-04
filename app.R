@@ -221,7 +221,7 @@ server = function(input, output, session) {
             dplyr::select(Latitude, Longitude, Mean) %>%
             sample_n(30000)
 
-        data$q <- as.numeric(cut(
+        data$q = as.numeric(cut(
             data$Mean,
             breaks = quantile(data$Mean, probs = c(0, 0.90, 0.95, 0.99, 1)),
             include.lowest = TRUE
@@ -344,12 +344,12 @@ server = function(input, output, session) {
 
 
 
-    df_filtered<-reactive({
+    df_filtered=reactive({
       grid_prediction %>%
         dplyr::filter(Year == input$ground_year) %>% dplyr::select("Longitude","Latitude",  "Mean")
     })
 
-    output$my_leaf <- renderLeaflet({
+    output$my_leaf = renderLeaflet({
 
           r = raster::rasterFromXYZ(df_filtered())
       crs(r) = crs(who_world_map)
@@ -382,7 +382,7 @@ server = function(input, output, session) {
     # })
 
     observe({
-        cat <- input$cat
+        cat = input$cat
 
         # Can use character(0) to remove all choices
         if (cat== "Country"){
@@ -399,7 +399,7 @@ server = function(input, output, session) {
     })
 
     observe({
-        cat_conc <- input$cat
+        cat_conc = input$cat
 
         # Can use character(0) to remove all choices
         if (cat_conc== "Country"){
@@ -631,7 +631,7 @@ shinyApp(ui, server)
 #     r = raster::rasterFromXYZ(grid_prediction %>% dplyr::filter(Year == 2011) %>% dplyr::select("Longitude","Latitude",  "Mean"))
 # crs(r) = crs(who_world_map)
 #
-# pal <- colorNumeric(
+# pal = colorNumeric(
 #   palette = rainbow(30),
 #   domain = grid_prediction$Mean
 # )
