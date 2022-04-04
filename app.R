@@ -176,6 +176,26 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
                                     ),
                            ),
                 navbarMenu("Spatial Data",
+                           tabPanel("Gridded Prediction Data",
+                                    titlePanel("Gridded Prediction Data"),
+                                    p("Ground measurements were available for locations reported within the WHO ‘Air pollution in cities’ database (World Health Organization, 2016b) but, rather than using the city averages that are reported in that database, monitor-specific measurements are used. The result was measurements of PM10- and PM2.5-concentrations from 6003 ground monitors. "),
+                                    br(),
+                                    sidebarLayout(
+                                      selectInput(
+                                        inputId = "grid_year",
+                                        choices = 2011:2016,
+                                        selected = 2011,
+                                        label = "Select a year"
+                                      ),
+
+                                    mainPanel(
+                                      tabsetPanel(
+                                        tabPanel("Graph",leafglOutput("my_leaf")%>% withSpinner(type = 6, color = "#009CDE")),
+                                        tabPanel("Table",dataTableOutput("grid_pred_table"))
+                                        )
+                                      )
+                                    )
+                                    ),
                            tabPanel("Ground Monitor Data",
                                     titlePanel("Ground Monitor Data"),
                                     p("Ground measurements were available for locations reported within the WHO ‘Air pollution in cities’ database (World Health Organization, 2016b) but, rather than using the city averages that are reported in that database, monitor-specific measurements are used. The result was measurements of PM10- and PM2.5-concentrations from 6003 ground monitors. "),
@@ -188,10 +208,13 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
                                         label = "Select a year"
                                       ),
 
-                                    mainPanel(leafglOutput("my_leaf")%>% withSpinner(type = 6, color = "#009CDE"))
-                                    )
-                                    ),
-                           tabPanel("Gridded Prediction Data")),
+                                      mainPanel(
+                                        tabsetPanel(
+                                          tabPanel("Graph",leafglOutput("my_leaf")%>% withSpinner(type = 6, color = "#009CDE")),
+                                          tabPanel("Table",dataTableOutput("grid_pred_table"))
+                                        )
+                                      )
+                                    )),
                     tags$footer(
                         HTML(
                             "
@@ -344,15 +367,23 @@ server = function(input, output, session) {
     })
 
     # Filtered df from grid_prediction
-    df_filtered=reactive({
+    df_filtered_grid = reactive({
       grid_prediction %>%
-        dplyr::filter(Year == input$ground_year) %>% dplyr::select("Longitude","Latitude",  "Mean")
+        dplyr::filter(Year == input$grid_year)
     })
+    # Concentration Table
+    output$ground_mon_table =  renderDataTable({
+      datatable(df_filtered(),
+                options = list(scrollX = TRUE),
+                escape = FALSE)
 
+    })
     # Leaflet map from grid prediction
     output$my_leaf = renderLeaflet({
 
-      r = raster::rasterFromXYZ(df_filtered())
+      data_new= df_filtered() %>% dplyr::select("Longitude","Latitude",  "Mean")
+
+      r = raster::rasterFromXYZ(data_new)
       crs(r) = crs(who_world_map)
 
       leaflet(who_world_map) %>%
@@ -367,8 +398,37 @@ server = function(input, output, session) {
 
     })
 
+    # Ground monitor reactive data
+    df_filtered=reactive({
+      grid_prediction %>%
+        dplyr::filter(Year == input$ground_year)
+    })
+    # Concentration Table
+    output$grid_pred_table =  renderDataTable({
+      datatable(df_filtered(),
+                options = list(scrollX = TRUE),
+                escape = FALSE)
 
+    })
+    # Leaflet map from grid prediction
+    output$my_leaf = renderLeaflet({
 
+      data_new= df_filtered() %>% dplyr::select("Longitude","Latitude",  "Mean")
+
+      r = raster::rasterFromXYZ(data_new)
+      crs(r) = crs(who_world_map)
+
+      leaflet(who_world_map) %>%
+        addProviderTiles(provider = providers$Stamen.TerrainBackground) %>%
+        addPolygons(    stroke=TRUE,
+                        fillOpacity = 0.3,
+                        color="black",
+                        weight=0.5) %>%
+        addRasterImage(r,  opacity = 0.5,colors = pal) %>%
+        addLegend(pal = pal, values = values(r),
+                  title = "Mean Pm2.5 Prediction")
+
+    })
 
     # observe({
     #     updateSelectInput(
@@ -382,6 +442,7 @@ server = function(input, output, session) {
     #     )
     # })
 
+    # graph observe
     observe({
         cat = input$cat
 
