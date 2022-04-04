@@ -62,7 +62,7 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
                         fluidRow(
                             column(
                                 6,
-                                img(src="World_Health_Organization_logo.png", align = "left", height = 140, width = 400)
+                                img(src="who.png", align = "left", height = 140, width = 400)
                             ),
                             column(
                                 6,
@@ -176,19 +176,22 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
                                     ),
                            ),
                 navbarMenu("Spatial Data",
-                           tabPanel("Gridded Prediction Data",
+                           tabPanel("Ground Monitor Data",
+                                    titlePanel("Ground Monitor Data"),
+                                    p("Ground measurements were available for locations reported within the WHO ‘Air pollution in cities’ database (World Health Organization, 2016b) but, rather than using the city averages that are reported in that database, monitor-specific measurements are used. The result was measurements of PM10- and PM2.5-concentrations from 6003 ground monitors. "),
+                                    br(),
                                     sidebarLayout(
                                       selectInput(
                                         inputId = "ground_year",
-                                        choices = unique(ground_monitors$Year),
-                                        selected = "2011",
+                                        choices = 2011:2016,
+                                        selected = 2011,
                                         label = "Select a year"
                                       ),
 
-                                    mainPanel(leafglOutput("ground_monitor_map"))
+                                    mainPanel(leafglOutput("my_leaf")%>% withSpinner(type = 6, color = "#009CDE"))
                                     )
                                     ),
-                           tabPanel("Ground Monitor Data")),
+                           tabPanel("Gridded Prediction Data")),
                     tags$footer(
                         HTML(
                             "
@@ -339,9 +342,17 @@ server = function(input, output, session) {
 
     })
 
-    output$ground_monitor_map = renderLeafgl({
-      ground_monitors = st_as_sf(ground_monitors %>%
-                                   dplyr::filter(Year == input$ground_year), coords = c("Longitude","Latitude"))
+
+
+    df_filtered<-reactive({
+      grid_prediction %>%
+        dplyr::filter(Year == input$ground_year) %>% dplyr::select("Longitude","Latitude",  "Mean")
+    })
+
+    output$my_leaf <- renderLeaflet({
+
+          r = raster::rasterFromXYZ(df_filtered())
+      crs(r) = crs(who_world_map)
 
       leaflet(who_world_map) %>%
         addProviderTiles(provider = providers$Stamen.TerrainBackground) %>%
@@ -349,12 +360,15 @@ server = function(input, output, session) {
                         fillOpacity = 0.3,
                         color="black",
                         weight=0.5) %>%
-        addGlPoints(data = ground_monitors,
-                    color = "blues",
-                    group = "PM25",
-                    popup = c("CountryName","StationID","PM25"))
+        addRasterImage(r,  opacity = 0.5,colors = pal) %>%
+          addLegend(pal = pal, values = values(r),
+                    title = "Mean Pm2.5 Prediction")
 
     })
+
+
+
+
     # observe({
     #     updateSelectInput(
     #         session,
@@ -614,7 +628,22 @@ shinyApp(ui, server)
 #               title = "Surface temp")
 #
 # library(raster)
-#     r = raster::rasterFromXYZ(grid_prediction %>% dplyr::filter(Year == 2011) %>% dplyr::select("Latitude", "Longitude", "Mean"))
+#     r = raster::rasterFromXYZ(grid_prediction %>% dplyr::filter(Year == 2011) %>% dplyr::select("Longitude","Latitude",  "Mean"))
+# crs(r) = crs(who_world_map)
 #
-# leaflet() %>% addProviderTiles( providers$CartoDB.DarkMatter) %>%
-#     addRasterImage(r, colors = pal, opacity = 0.5)
+# pal <- colorNumeric(
+#   palette = rainbow(30),
+#   domain = grid_prediction$Mean
+# )
+#
+# leaflet(who_world_map) %>% addProviderTiles(providers$Esri.WorldShadedRelief) %>%
+#   addPolygons(
+#     stroke = TRUE,
+#     fillOpacity = 0.3,
+#     color = "black",
+#     weight = 0.5
+#   )  %>%
+#   addRasterImage(r,  opacity = 0.5,colors = pal) %>%
+#   addLegend(pal = pal, values = values(r),
+#             title = "Mean Pm2.5 Prediction")
+#
