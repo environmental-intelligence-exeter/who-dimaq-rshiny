@@ -214,8 +214,9 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
 ##################################################################
 
 server = function(input, output, session) {
-    # Reactive value for selected dataset ----
 
+
+  # Homepage globe
     output$maphp = renderGlobe({
         data = grid_prediction %>% dplyr::filter(Year == 2016) %>%
             dplyr::select(Latitude, Longitude, Mean) %>%
@@ -241,7 +242,7 @@ server = function(input, output, session) {
 
     })
 
-
+    # Old map style for grid prediction
     output$map = renderPlotly({
         req(input$country)
         if (identical(input$country, ""))
@@ -259,7 +260,7 @@ server = function(input, output, session) {
         width = session$clientData$output_p_width
         ggplotly(p, height = height, width = width)
     })
-
+    # old Table for grid prediction
     output$table = renderDataTable({
         data = grid_prediction %>% filter(Year == input$year, CountryName == input$country)
         datatable(data,
@@ -268,6 +269,7 @@ server = function(input, output, session) {
 
     })
 
+    # Exceedance Graph
     output$exceed_graph = renderPlotly({
         plot_ly(
             excceed %>% filter(
@@ -283,7 +285,7 @@ server = function(input, output, session) {
             group_by(ID) %>%
             add_lines()
     })
-
+    # Exceedance Table
     output$exceed_table =  renderDataTable({
         exceed_data =           excceed %>% filter(
             UrbanRural == input$landclass,
@@ -296,8 +298,7 @@ server = function(input, output, session) {
                   escape = FALSE)
 
     })
-
-
+    # Observe exceedance input
     observe({
         updateSelectInput(
             session,
@@ -309,8 +310,8 @@ server = function(input, output, session) {
             ) %>% dplyr::select(ID)
         )
     })
-    #####
 
+    # Concentration Graph confidence intervals
     output$conc_graph_ci = renderPlot({
       ggplot(concentration %>% dplyr::filter(byvar == input$country_conc) %>% dplyr::filter(Category == input$cat_conc) %>%
                     dplyr::filter(Type == input$type_conc) %>% dplyr::filter(UrbanRural == input$landclass_conc), aes(Year, Mean)) +        # ggplot2 plot with confidence intervals
@@ -319,7 +320,7 @@ server = function(input, output, session) {
 
 
     })
-
+    # Concentration Table
     output$conc_table =  renderDataTable({
         concentration_data =   concentration %>% filter(
             UrbanRural == input$landclass_conc,
@@ -332,7 +333,7 @@ server = function(input, output, session) {
                   escape = FALSE)
 
     })
-
+    # Concentraion Graph predictor intervals
     output$conc_graph_pi = renderPlot({
         ggplot(concentration %>% dplyr::filter(byvar == input$country_conc) %>% dplyr::filter(Category == input$cat_conc) %>%
                    dplyr::filter(Type == input$type_conc) %>% dplyr::filter(UrbanRural == input$landclass_conc), aes(Year, Mean)) +        # ggplot2 plot with confidence intervals
@@ -342,16 +343,16 @@ server = function(input, output, session) {
 
     })
 
-
-
+    # Filtered df from grid_prediction
     df_filtered=reactive({
       grid_prediction %>%
         dplyr::filter(Year == input$ground_year) %>% dplyr::select("Longitude","Latitude",  "Mean")
     })
 
+    # Leaflet map from grid prediction
     output$my_leaf = renderLeaflet({
 
-          r = raster::rasterFromXYZ(df_filtered())
+      r = raster::rasterFromXYZ(df_filtered())
       crs(r) = crs(who_world_map)
 
       leaflet(who_world_map) %>%
@@ -421,229 +422,3 @@ server = function(input, output, session) {
 #################################################################
 
 shinyApp(ui, server)
-
-
-# theme = bs_theme(
-#     bg = "#0b3d91", fg = "white", primary = "#FCC780",
-#     base_font = font_google("Open Sans"),
-#     code_font = font_google("Open Sans")
-# ),
-# navbarPage(
-#     "DIMAQ",
-#     tabPanel(
-#         "Home",
-#         h1("Data Integration Model for Air Quality"),
-#         fluidRow(
-#             column(
-#                 8,
-#                 align = "left",
-#                 globeOutput("maphp") %>% withSpinner(type = 6, color = "#009CDE"),
-#             ),
-#             column(
-#                 4,
-#                 align = "left",
-#                 br(),
-#                 p(
-#                     "DIMAQ was developed by the members of the Data Integration Task Force, a multi-disciplinary group of experts established as part of the recommendations from the first meeting of the WHO Global Platform for Air Quality in Geneva, January 2014. The resulting Data Integration Task Force consists of the first, fourth–ninth and 12th–16th authors of this paper together with members of the WHO (the 10th, 11th and 17th authors)."
-#                 ),
-#                 h4("Paper"),
-#                 a(
-#                     href = "https://rss.onlinelibrary.wiley.com/doi/full/10.1111/rssc.12227",
-#                     "A Hierarchical Approach to the Global Estimation of Exposures to Ambient Air Pollution"
-#                 ),
-#                 h4("Latest Data:"),
-#                 downloadButton("downloadDataGP2016", "Gridded Predictions 2016"),
-#                 h4("R Package:"),
-#                 code('install.package("dimaqdata")'),
-#                 br(),
-#                 tags$head(
-#                     tags$style(
-#                         ".butt{background-color:#add8e6;} .butt{color: #337ab7;margin-top:2%}"
-#                     )
-#                 ),
-#             )
-#         ),
-#         h2("Modelled estimates of particulate matter air pollution"),
-#         p(
-#             "Estimation of global health risks from exposure to ambient air pollution requires a comprehensive set of air pollution exposure data covering all inhabited areas. The Data Integration Model for Air Quality (DIMAQ) – developed by the University of Exeter – has produced estimates based on data from ground measurements (see the Database on air quality)  together with information from other sources including data from satellite retrievals of aerosol optical depth and chemical transport models. It provides estimates of annual concentrations to PM2.5 at high spatial resolution (0.1° × 0.1°, which equates to approximately 11x11km at the equator) globally."
-#         ),
-#         p(
-#             "The sources of data include: Ground measurements from 9690 monitoring locations around the world, satellite remote sensing; population estimates; topography; and information on local monitoring networks and measures of specific contributors of air pollution from chemical transport models. Within DIMAQ, data from these sources are calibrated with ground measurements. The model provides estimates of air quality, expressed in terms of median concentrations of PM2.5, for all regions of the world, including areas in which PM2.5 monitoring is not available."
-#         ),
-#         h2("Project Partners"),
-#         fluidRow(
-#             column(
-#                 6,
-#                 img(src="World_Health_Organization_logo.png", align = "left", height = 140, width = 400)
-#             ),
-#             column(
-#                 6,
-#                 img(src="University-of-Exeter-logo-1000x600.png", align = "right", height = 140, width = 400)
-#             )
-#         ),
-#         br(),
-#         h4("Past Data:"),
-#         downloadButton("downloadDataGP2015", "Gridded Predictions 2015", class = "butt"),
-#         downloadButton("downloadDataGP2014", "Gridded Predictions 2014", class = "butt"),
-#         downloadButton("downloadDataGP2013", "Gridded Predictions 2013", class = "butt"),
-#         downloadButton("downloadDataGP2012", "Gridded Predictions 2012", class = "butt"),
-#         downloadButton("downloadDataGP2011", "Gridded Predictions 2011", class = "butt"),
-#     ),
-#
-#     navbarPage(
-#         "Temporal",
-#         tabPanel("Exceedances",
-#                  titlePanel("Exceedances"),
-#                  p("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"),
-#                  br(),
-#                  sidebarLayout(
-#
-#                      sidebarPanel(
-#                          selectInput(
-#                              inputId = "cat",
-#                              choices = unique(excceed$Category),
-#                              selected = "Country",
-#                              label = "Country or Region"
-#                          ),
-#                          selectizeInput(
-#                              inputId = "countryex",
-#                              label = "Select a country",
-#                              choices = unique(excceed$ID),
-#                              selected = sample(countries, 1),
-#                              multiple = TRUE
-#                          ),
-#                          selectInput(
-#                              inputId = "landclass",
-#                              choices = unique(excceed$UrbanRural),
-#                              selected = "Overall",
-#                              label = "Urban | Rural"
-#                          ),
-#                          selectInput(
-#                              inputId = "scale",
-#                              choices = unique(excceed$Scale),
-#                              selected = "10",
-#                              label = "Scale"
-#                          )
-#                      ),
-#
-#                      # Show a plot of the generated distribution
-#                      mainPanel(plotlyOutput(outputId =  "p") %>% withSpinner(type = 6, color = "#009CDE"))
-#                  )
-#         )
-#     ),
-#     tabPanel("Spatial",
-#              fluidRow(
-#                  column(
-#                      6,
-#                      align = "center",
-#                      selectInput(
-#                          inputId = "country",
-#                          label = "Search for a country",
-#                          choices = countries,
-#                          selected = sample(countries, 1)
-#
-#                      )
-#                  ),
-#
-#                  column(
-#                      6,
-#                      align = "center",
-#                      selectInput(
-#                          inputId = "year",
-#                          label = "Select a Year",
-#                          choices = 2011:2016
-#                      )
-#                  )
-#                  # ,
-#                  # column(
-#                  #     2,
-#                  #     materialSwitch(
-#                  #         inputId = "mode",
-#                  #         label = icon("moon"),
-#                  #         right = TRUE,
-#                  #         status = "success"
-#                  #     )
-#                  # )
-#
-#              ),
-#              fluidRow(
-#                  column(
-#                      12,
-#                      align = "center",
-#                      plotlyOutput("map") %>% withSpinner(type = 6, color = "#009CDE"),
-#                      dataTableOutput("table")
-#                  )
-#              ),),
-#     br(),
-#     br(),
-#     tags$footer(
-#         HTML(
-#             "
-#                     <!-- Footer -->
-#                            <footer class='page-footer font-large indigo'>
-#                            <!-- Copyright -->
-#                            <a  style='text-align:centre !important;color:white !important' href='https://mdbootstrap.com/education/bootstrap/
-#                            <div style=';background-color:#009CDE;'><p style='text-align:center;'> Built by the Environmental Intelligence CDT </br> Exeter University </p></a>
-#                            </div>
-#                            <!-- Copyright -->
-#                            </footer>
-#                            <!-- Footer -->"
-#         )
-#     )
-# )
-
-#     ggplot() + geom_tile(
-#         data = grid_prediction %>% dplyr::filter(Year == 2011)
-#         aes(
-#             x = Longitude,
-#             y = Latitude,
-#             fill = Mean
-#         )
-#     ) + theme_bw() + theme(panel.grid.major = element_blank(),
-#                            panel.grid.minor = element_blank())
-#
-#
-#     geom_tile(
-#         data = grid_prediction %>% filter(Year == input$year, CountryName == input$country),
-#         aes(
-#             x = Longitude,
-#             y = Latitude,
-#             fill = Mean
-#         )
-#     ) + theme_bw() + theme(panel.grid.major = element_blank(),
-#                            panel.grid.minor = element_blank())
-#
-#     data
-# plot_ly(canada, split = ~name, color = ~provnum_ne)
-#
-# leaflet() %>%
-#     addProviderTiles(provider =) %>%
-#     addGlPoints(data = st_as_sf(grid_prediction, coords = c("Latitude","Longitude")) %>% dplyr::filter(Year == 2011, CountryName == "Algeria"), group = "Mean", fillColor = "Mean") %>%
-#     addLayersControl(overlayGroups = "Mean")
-#
-#
-# leaflet(options = leafletOptions(worldCopyJump = F, crs = "EPSG:4326")) %>% addTiles() %>%
-#     addRasterImage(r, colors = pal, opacity = 0.8) %>%
-#     addLegend(pal = pal, values = values(r),
-#               title = "Surface temp")
-#
-# library(raster)
-#     r = raster::rasterFromXYZ(grid_prediction %>% dplyr::filter(Year == 2011) %>% dplyr::select("Longitude","Latitude",  "Mean"))
-# crs(r) = crs(who_world_map)
-#
-# pal = colorNumeric(
-#   palette = rainbow(30),
-#   domain = grid_prediction$Mean
-# )
-#
-# leaflet(who_world_map) %>% addProviderTiles(providers$Esri.WorldShadedRelief) %>%
-#   addPolygons(
-#     stroke = TRUE,
-#     fillOpacity = 0.3,
-#     color = "black",
-#     weight = 0.5
-#   )  %>%
-#   addRasterImage(r,  opacity = 0.5,colors = pal) %>%
-#   addLegend(pal = pal, values = values(r),
-#             title = "Mean Pm2.5 Prediction")
-#
