@@ -223,22 +223,22 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
         "Ground measurements were available for locations reported within the WHO ‘Air pollution in cities’ database (World Health Organization, 2016b) but, rather than using the city averages that are reported in that database, monitor-specific measurements are used. The result was measurements of PM10- and PM2.5-concentrations from 6003 ground monitors. "
       ),
       br(),
-      sidebarLayout(
-        selectInput(
-          inputId = "ground_year",
-          choices = 2011:2016,
-          selected = 2011,
-          label = "Select a year"
-        ),
-
-        mainPanel(tabsetPanel(
-          tabPanel(
-            "Graph",
-            leafglOutput("my_leaf") %>% withSpinner(type = 6, color = "#009CDE")
-          ),
-          tabPanel("Table", dataTableOutput("grid_pred_table"))
-        ))
-      )
+#       sidebarLayout(
+#         selectInput(
+#           inputId = "ground_year",
+#           choices = 2011:2016,
+#           selected = 2011,
+#           label = "Select a year"
+#         ),
+# #
+# #         mainPanel(tabsetPanel(
+# #           tabPanel(
+# #             "Graph",
+# #             leafglOutput("my_leaf") %>% withSpinner(type = 6, color = "#009CDE")
+# #           ),
+# #           tabPanel("Table", dataTableOutput("grid_pred_table"))
+# #         ))
+#       )
     ),
     tags$footer(
       HTML(
@@ -438,26 +438,26 @@ server = function(input, output, session) {
 
   })
   # Leaflet map from grid prediction
-  output$my_leaf = renderLeaflet({
-    data_new = df_filtered() %>% dplyr::select("Longitude", "Latitude",  "Mean")
-
-    r = raster::rasterFromXYZ(data_new)
-    crs(r) = crs(who_world_map)
-
-    leaflet(who_world_map) %>%
-      addProviderTiles(provider = providers$Stamen.TerrainBackground) %>%
-      addPolygons(
-        stroke = TRUE,
-        fillOpacity = 0.3,
-        color = "black",
-        weight = 0.5
-      ) %>%
-      addRasterImage(r,  opacity = 0.5, colors = pal) %>%
-      addLegend(pal = pal,
-                values = values(r),
-                title = "Mean Pm2.5 Prediction")
-
-  })
+  # output$my_leaf = renderLeaflet({
+  #   data_new = df_filtered() %>% dplyr::select("Longitude", "Latitude",  "Mean")
+  #
+  #   r = raster::rasterFromXYZ(data_new)
+  #   crs(r) = crs(who_world_map)
+  #
+  #   leaflet(who_world_map) %>%
+  #     addProviderTiles(provider = providers$Stamen.TerrainBackground) %>%
+  #     addPolygons(
+  #       stroke = TRUE,
+  #       fillOpacity = 0.3,
+  #       color = "black",
+  #       weight = 0.5
+  #     ) %>%
+  #     addRasterImage(r,  opacity = 0.5, colors = pal) %>%
+  #     addLegend(pal = pal,
+  #               values = values(r),
+  #               title = "Mean Pm2.5 Prediction")
+  #
+  # })
 
   # observe({
   #     updateSelectInput(
