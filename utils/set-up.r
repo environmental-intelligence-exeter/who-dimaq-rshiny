@@ -12,7 +12,8 @@ pkgs = c(
   "plotly",
   "threejs",
   "leaflet",
-  "leafgl"
+  "leafgl",
+  "raster"
 )
 
 # Install pkgs not yet installed
