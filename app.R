@@ -289,29 +289,29 @@ server = function(input, output, session) {
   })
 
   # Old map style for grid prediction
-  output$map = renderPlotly({
-    req(input$country)
-    if (identical(input$country, ""))
-      return(NULL)
-    p = ggplot() + geom_tile(
-      data = grid_prediction %>% filter(Year == input$year, CountryName == input$country),
-      aes(x = Longitude,
-          y = Latitude,
-          fill = Mean)
-    ) + theme_bw() + theme(panel.grid.major = element_blank(),
-                           panel.grid.minor = element_blank())
-    height = session$clientData$output_p_height
-    width = session$clientData$output_p_width
-    ggplotly(p, height = height, width = width)
-  })
-  # old Table for grid prediction
-  output$table = renderDataTable({
-    data = grid_prediction %>% filter(Year == input$year, CountryName == input$country)
-    datatable(data,
-              options = list(scrollX = TRUE),
-              escape = FALSE)
-
-  })
+  # output$map = renderPlotly({
+  #   req(input$country)
+  #   if (identical(input$country, ""))
+  #     return(NULL)
+  #   p = ggplot() + geom_tile(
+  #     data = grid_prediction %>% filter(Year == input$year, CountryName == input$country),
+  #     aes(x = Longitude,
+  #         y = Latitude,
+  #         fill = Mean)
+  #   ) + theme_bw() + theme(panel.grid.major = element_blank(),
+  #                          panel.grid.minor = element_blank())
+  #   height = session$clientData$output_p_height
+  #   width = session$clientData$output_p_width
+  #   ggplotly(p, height = height, width = width)
+  # })
+  # # old Table for grid prediction
+  # output$table = renderDataTable({
+  #   data = grid_prediction %>% filter(Year == input$year, CountryName == input$country)
+  #   datatable(data,
+  #             options = list(scrollX = TRUE),
+  #             escape = FALSE)
+  #
+  # })
 
   # Exceedance Graph
   output$exceed_graph = renderPlotly({
@@ -403,6 +403,7 @@ server = function(input, output, session) {
               escape = FALSE)
 
   })
+
   # Leaflet map from grid prediction
   output$my_leaf = renderLeaflet({
     data_new = df_filtered() %>% dplyr::select("Longitude", "Latitude",  "Mean")
@@ -411,7 +412,7 @@ server = function(input, output, session) {
     crs(r) = crs(who_world_map)
 
     leaflet(who_world_map) %>%
-      addProviderTiles(provider = providers$Stamen.TerrainBackground) %>%
+      addProviderTiles(provider = providers$CartoDB.PositronNoLabels) %>%
       addPolygons(
         stroke = TRUE,
         fillOpacity = 0.3,
