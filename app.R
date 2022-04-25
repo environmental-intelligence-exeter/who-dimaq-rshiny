@@ -375,8 +375,8 @@ server = function(input, output, session) {
   # Exceedance Table
   output$exceed_table =  renderDataTable({
     exceed_data =           excceed %>% dplyr::filter(UrbanRural == input$landclass,
-                                               Category == input$cat,
-                                               Scale == input$scale) %>% dplyr::filter(ID %in% input$countryex) %>%
+                                                      Category == input$cat,
+                                                      Scale == input$scale) %>% dplyr::filter(ID %in% input$countryex) %>%
       group_by(ID)
     datatable(exceed_data,
               options = list(scrollX = TRUE),
@@ -438,7 +438,7 @@ server = function(input, output, session) {
               escape = FALSE)
 
   })
-   # Concentraion Graph predictor intervals
+  # Concentraion Graph predictor intervals
   output$conc_graph_pi = renderPlotly({
     tt2= ggplot(
       concentration %>% dplyr::filter(byvar == input$country_conc) %>% dplyr::filter(Category == input$cat_conc) %>%
@@ -469,9 +469,9 @@ server = function(input, output, session) {
               escape = FALSE)
 
   })
-    # pred Table
+  # pred Table
   output$grid_pred_table =  renderDataTable({
-    datatable(df_filtered(),
+    datatable(df_filtered_grid(),
               options = list(scrollX = TRUE),
               escape = FALSE)
 
@@ -531,6 +531,16 @@ server = function(input, output, session) {
     }
   )
   gp11 = grid_prediction %>% dplyr::filter(Year == 2011)
+  output$downloadDataGP2011 = downloadHandler(
+    filename = function() {
+      paste("dimaq-2011-grid-predictions", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      write.csv(gp11, file)
+    }
+  )
+
+  exdownload = grid_prediction %>% dplyr::filter(Year == 2011)
   output$downloadDataGP2011 = downloadHandler(
     filename = function() {
       paste("dimaq-2011-grid-predictions", Sys.Date(), ".csv", sep="")
