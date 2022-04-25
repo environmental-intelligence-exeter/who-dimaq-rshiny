@@ -8,7 +8,7 @@ source("utils/set-up.r")
 ##                              UI                              ##
 ##################################################################
 ui = navbarPage(
-  "DIMAQ",
+  "The Data Integration Model for Air Quality ",
   # Create Right Side Logo/Image with Link
   tags$script(
     HTML(
