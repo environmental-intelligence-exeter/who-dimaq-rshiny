@@ -96,8 +96,8 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
   navbarMenu(
     "Temporal Data",
     tabPanel(
-      "Global & Regional pm2.5 Concentraions",
-      titlePanel("Global & Regional pm2.5 Concentraions"),
+      "Global & Regional pm2.5 Exceedances",
+      titlePanel("Global & Regional pm2.5 Exceedances"),
       p(
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"
       ),
@@ -130,7 +130,7 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
             selected = "10",
             label = "Scale"
           ),
-          downloadButton("datadownload", "Download Data", class = "butt")
+          downloadButton("datadownloadex", "Download Data", class = "butt")
 
 
         ),
@@ -143,8 +143,8 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
       )
     ),
     tabPanel(
-      "Global & Regional pm2.5 Exceedances",
-      titlePanel("Global & Regional pm2.5 Exceedances"),
+      "Global & Regional pm2.5 Concentrations",
+      titlePanel("Global & Regional pm2.5 Concentrations"),
       p(
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"
       ),
@@ -176,7 +176,7 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
             selected = "Population-weighted concentration",
             label = "Type"
           ),
-          downloadButton("datadownloadex", "Download Data", class = "butt")
+          downloadButton("datadownloadconc", "Download Data", class = "butt")
 
 
         ),
@@ -276,15 +276,21 @@ server = function(input, output, session) {
     grid_prediction %>%
       dplyr::filter(Year == input$ground_year)
   })
-  # Ground monitor reactive data
-  df_filtered = reactive({
-    grid_prediction %>%
-      dplyr::filter(Year == input$ground_year)
-  })
   ground_mon_filt = reactive({
     ground_monitors %>%
       dplyr::filter(Year == input$ground_mon_year)
   })
+  exceed_data_d = reactive(({
+   excceed %>% dplyr::filter(UrbanRural == input$landclass,
+                                                      Category == input$cat,
+                                                      Scale == input$scale) %>% dplyr::filter(ID %in% input$countryex) %>%
+      group_by(ID)
+  }))
+  conc_data_d = reactive({
+    concentration %>% dplyr::filter(byvar == input$country_conc) %>% dplyr::filter(Category == input$cat_conc) %>%
+      dplyr::filter(Type == input$type_conc) %>% dplyr::filter(UrbanRural == input$landclass_conc)
+  })
+
 
   # Homepage globe
   output$maphp = renderGlobe({
@@ -359,11 +365,7 @@ server = function(input, output, session) {
   # Exceedance Graph
   output$exceed_graph = renderPlotly({
     plot_ly(
-      excceed %>% filter(
-        UrbanRural == input$landclass,
-        Category == input$cat,
-        Scale == input$scale
-      ),
+      exceed_data_d() ,
       x = ~ Year,
       y = ~ Value,
       name = ~ ID
@@ -374,11 +376,8 @@ server = function(input, output, session) {
   })
   # Exceedance Table
   output$exceed_table =  renderDataTable({
-    exceed_data =           excceed %>% dplyr::filter(UrbanRural == input$landclass,
-                                                      Category == input$cat,
-                                                      Scale == input$scale) %>% dplyr::filter(ID %in% input$countryex) %>%
-      group_by(ID)
-    datatable(exceed_data,
+    exceed_data = exceed_data_d()
+    datatable(exceed_data(),
               options = list(scrollX = TRUE),
               escape = FALSE)
 
@@ -388,11 +387,7 @@ server = function(input, output, session) {
     updateSelectInput(
       session,
       "countryex",
-      choices =  excceed %>% dplyr::filter(
-        UrbanRural == input$landclass,
-        Category == input$cat,
-        Scale == input$scale
-      ) %>% dplyr::select(ID)
+      choices =  exceed_data_d()
     )
   })
   # graph observe
@@ -416,8 +411,7 @@ server = function(input, output, session) {
   # Concentration Graph confidence intervals
   output$conc_graph_ci = renderPlotly({
     tt1=ggplot(
-      concentration %>% dplyr::filter(byvar == input$country_conc) %>% dplyr::filter(Category == input$cat_conc) %>%
-        dplyr::filter(Type == input$type_conc) %>% dplyr::filter(UrbanRural == input$landclass_conc),
+      conc_data_d(),
       aes(Year, Mean)
     ) +        # ggplot2 plot with confidence intervals
       geom_point() +
@@ -427,13 +421,9 @@ server = function(input, output, session) {
   })
   # Concentration Table
   output$conc_table =  renderDataTable({
-    concentration_data =   concentration %>% dplyr::filter(
-      UrbanRural == input$landclass_conc,
-      Category == input$cat_conc,
-      Type == input$type_conc
-    ) %>% dplyr::filter(byvar %in% input$country_conc) %>%
+    concentration_data =   conc_data_d() %>% dplyr::filter(byvar %in% input$country_conc) %>%
       group_by(byvar)
-    datatable(concentration_data,
+    datatable(conc_data_d(),
               options = list(scrollX = TRUE),
               escape = FALSE)
 
@@ -441,8 +431,7 @@ server = function(input, output, session) {
   # Concentraion Graph predictor intervals
   output$conc_graph_pi = renderPlotly({
     tt2= ggplot(
-      concentration %>% dplyr::filter(byvar == input$country_conc) %>% dplyr::filter(Category == input$cat_conc) %>%
-        dplyr::filter(Type == input$type_conc) %>% dplyr::filter(UrbanRural == input$landclass_conc),
+      conc_data_d(),
       aes(Year, Mean)
     ) +        # ggplot2 plot with confidence intervals
       geom_point() +
@@ -462,13 +451,7 @@ server = function(input, output, session) {
   # })
 
 
-  # Concentration Table
-  output$ground_mon_table =  renderDataTable({
-    datatable(df_filtered(),
-              options = list(scrollX = TRUE),
-              escape = FALSE)
 
-  })
   # pred Table
   output$grid_pred_table =  renderDataTable({
     datatable(df_filtered_grid(),
@@ -540,13 +523,39 @@ server = function(input, output, session) {
     }
   )
 
-  exdownload = grid_prediction %>% dplyr::filter(Year == 2011)
-  output$downloadDataGP2011 = downloadHandler(
+  output$datadownloadex = downloadHandler(
     filename = function() {
-      paste("dimaq-2011-grid-predictions", Sys.Date(), ".csv", sep="")
+      paste("dimaq-global-exceedances", Sys.Date(), ".csv", sep="")
     },
     content = function(file) {
-      write.csv(gp11, file)
+      write.csv(exceed_data_d(), file)
+    }
+  )
+
+  output$datadownloadconc = downloadHandler(
+    filename = function() {
+      paste("dimaq-global-exceedances", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      write.csv(conc_data_d(), file)
+    }
+  )
+
+  output$datadownloadground = downloadHandler(
+    filename = function() {
+      paste("dimaq-ground-monitors", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      write.csv(ground_mon_filt(), file)
+    }
+  )
+
+  output$datadownloadpred = downloadHandler(
+    filename = function() {
+      paste("dimaq-global-grid-prediction", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      write.csv(df_filtered_grid(), file)
     }
   )
 
