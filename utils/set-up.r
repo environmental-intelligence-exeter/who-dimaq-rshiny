@@ -12,7 +12,6 @@ pkgs = c(
   "plotly",
   "threejs",
   "leaflet",
-  "leafgl",
   "raster"
 )
 
@@ -32,6 +31,6 @@ concentration = readRDS("data/concentrations.rds")
 who_world_map = readRDS("data/who_world_map.rds")
 ground_monitors = readRDS(("data/ground_monitor.rds"))
 countries = as.list(unique(grid_prediction$CountryName))
-
+mon_types = as.list(unique(ground_monitors$MonitorType))
 
 

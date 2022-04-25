@@ -8,7 +8,7 @@ source("utils/set-up.r")
 ##                              UI                              ##
 ##################################################################
 ui = navbarPage(
-  "The Data Integration Model for Air Quality ",
+  "DIMAQ",
   # Create Right Side Logo/Image with Link
   tags$script(
     HTML(
@@ -46,9 +46,11 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
           "A Hierarchical Approach to the Global Estimation of Exposures to Ambient Air Pollution"
         ),
         h4("Latest Data:"),
-        downloadButton("downloadDataGP2016", "Gridded Predictions 2016"),
+        downloadButton("downloadDataGP2016", "Gridded Predictions 2016") ,
         h4("R Package:"),
-        code('install.package("dimaqdata")'),
+        code(
+          'devtools::install_github("environmental-intelligence-exeter/dimaqdata")'
+        ),
         br(),
         tags$head(
           tags$style(
@@ -160,8 +162,7 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
             inputId = "country_conc",
             label = "Select a country",
             choices = unique(concentration$byvar),
-            selected = "AFRO",
-            multiple = TRUE
+            selected = "AFRO"
           ),
           selectInput(
             inputId = "landclass_conc",
@@ -181,8 +182,8 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
         ),
 
         mainPanel(tabsetPanel(
-          tabPanel("Prediction Interval", plotOutput("conc_graph_ci")),
-          tabPanel("Confidence Interval", plotOutput("conc_graph_pi")),
+          tabPanel("Prediction Interval", plotlyOutput(outputId ="conc_graph_ci")),
+          tabPanel("Confidence Interval", plotlyOutput(outputId ="conc_graph_pi")),
           tabPanel("Table", dataTableOutput("conc_table"))
 
         ))
@@ -193,52 +194,60 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
   navbarMenu(
     "Spatial Data",
     tabPanel(
-      "Gridded Prediction Data",
-      titlePanel("Gridded Prediction Data"),
-      p(
-        "Ground measurements were available for locations reported within the WHO ‘Air pollution in cities’ database (World Health Organization, 2016b) but, rather than using the city averages that are reported in that database, monitor-specific measurements are used. The result was measurements of PM10- and PM2.5-concentrations from 6003 ground monitors. "
-      ),
-      br(),
-      sidebarLayout(
-        selectInput(
-          inputId = "grid_year",
-          choices = 2011:2016,
-          selected = 2011,
-          label = "Select a year"
-        ),
-
-        mainPanel(tabsetPanel(
-          tabPanel(
-            "Graph",
-            leafglOutput("my_leaf") %>% withSpinner(type = 6, color = "#009CDE")
-          ),
-          tabPanel("Table", dataTableOutput("grid_pred_table"))
-        ))
-      )
-    ),
-    tabPanel(
       "Ground Monitor Data",
       titlePanel("Ground Monitor Data"),
       p(
         "Ground measurements were available for locations reported within the WHO ‘Air pollution in cities’ database (World Health Organization, 2016b) but, rather than using the city averages that are reported in that database, monitor-specific measurements are used. The result was measurements of PM10- and PM2.5-concentrations from 6003 ground monitors. "
       ),
       br(),
-#       sidebarLayout(
-#         selectInput(
-#           inputId = "ground_year",
-#           choices = 2011:2016,
-#           selected = 2011,
-#           label = "Select a year"
-#         ),
-# #
-# #         mainPanel(tabsetPanel(
-# #           tabPanel(
-# #             "Graph",
-# #             leafglOutput("my_leaf") %>% withSpinner(type = 6, color = "#009CDE")
-# #           ),
-# #           tabPanel("Table", dataTableOutput("grid_pred_table"))
-# #         ))
-#       )
+      sidebarLayout(
+        sidebarPanel(
+          selectInput(
+            inputId = "ground_mon_year",
+            choices = 2011:2016,
+            selected = 2011,
+            label = "Select a year"
+          ),
+
+          downloadButton("datadownloadground", "Download Data", class = "butt")
+        ),
+
+        mainPanel(tabsetPanel(
+          tabPanel(
+            "Map",
+            leafletOutput("ground_mons") %>% withSpinner(type = 6, color = "#009CDE")
+          ),
+          tabPanel("Table", dataTableOutput("ground_mon_table"))
+        ))
+      ),
+    ),
+    tabPanel(
+      "Gridded Prediction Data",
+      titlePanel("Gridded Prediction Data"),
+      p(
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"
+      ),
+      br(),
+      sidebarLayout(
+        sidebarPanel(
+          selectInput(
+            inputId = "ground_year",
+            choices = 2011:2016,
+            selected = 2011,
+            label = "Select a year"
+          ),
+
+          downloadButton("datadownloadpred", "Download Data", class = "butt")
+        ),
+
+        mainPanel(tabsetPanel(
+          tabPanel(
+            "Map",
+            leafletOutput("my_leaf") %>% withSpinner(type = 6, color = "#009CDE")
+          ),
+          tabPanel("Table", dataTableOutput("grid_pred_table"))
+        ))
+      ),
     ),
     tags$footer(
       HTML(
@@ -262,6 +271,21 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
 ##################################################################
 
 server = function(input, output, session) {
+  # Filtered df from grid_prediction
+  df_filtered_grid = reactive({
+    grid_prediction %>%
+      dplyr::filter(Year == input$ground_year)
+  })
+  # Ground monitor reactive data
+  df_filtered = reactive({
+    grid_prediction %>%
+      dplyr::filter(Year == input$ground_year)
+  })
+  ground_mon_filt = reactive({
+    ground_monitors %>%
+      dplyr::filter(Year == input$ground_mon_year)
+  })
+
   # Homepage globe
   output$maphp = renderGlobe({
     data = grid_prediction %>% dplyr::filter(Year == 2016) %>%
@@ -287,31 +311,50 @@ server = function(input, output, session) {
     )
 
   })
+  output$ground_mons = renderLeaflet({
+    gmt = ground_mon_filt()
+    leaflet(gmt) %>% addTiles() %>% addProviderTiles(provider = providers$Esri.WorldTopoMap) %>%
+      addCircleMarkers(
+        lng = ~ Longitude,
+        lat = ~ Latitude,
+        popup = paste(
+          "Station ID",
+          gmt$StationID,
+          "<br>",
+          "Country:",
+          gmt$CountryName,
+          "<br>",
+          "PM25:",
+          gmt$PM25,
+          "<br>",
+          "Conv Factor:",
+          gmt$ConvFactor
+        ),
+        radius = ~ sqrt(PM25),
+        clusterOptions = markerClusterOptions()
+      )
+  })
+  # Leaflet map from grid prediction
+  output$my_leaf = renderLeaflet({
+    data_new = df_filtered_grid() %>% dplyr::select("Longitude", "Latitude",  "Mean")
 
-  # Old map style for grid prediction
-  # output$map = renderPlotly({
-  #   req(input$country)
-  #   if (identical(input$country, ""))
-  #     return(NULL)
-  #   p = ggplot() + geom_tile(
-  #     data = grid_prediction %>% filter(Year == input$year, CountryName == input$country),
-  #     aes(x = Longitude,
-  #         y = Latitude,
-  #         fill = Mean)
-  #   ) + theme_bw() + theme(panel.grid.major = element_blank(),
-  #                          panel.grid.minor = element_blank())
-  #   height = session$clientData$output_p_height
-  #   width = session$clientData$output_p_width
-  #   ggplotly(p, height = height, width = width)
-  # })
-  # # old Table for grid prediction
-  # output$table = renderDataTable({
-  #   data = grid_prediction %>% filter(Year == input$year, CountryName == input$country)
-  #   datatable(data,
-  #             options = list(scrollX = TRUE),
-  #             escape = FALSE)
-  #
-  # })
+    r = raster::rasterFromXYZ(data_new)
+    crs(r) = crs(who_world_map)
+
+    leaflet(who_world_map) %>%
+      addPolygons(
+        stroke = TRUE,
+        fillOpacity = 0.3,
+        color = "black",
+        popup = paste0(who_world_map$CNTRY_TERR),
+        weight = 0.5
+      ) %>%
+      addProviderTiles(
+        provider = providers$Esri.WorldTopoMap
+      ) %>%
+      addRasterImage(r,  opacity = 0.5)
+
+  })
 
   # Exceedance Graph
   output$exceed_graph = renderPlotly({
@@ -331,9 +374,9 @@ server = function(input, output, session) {
   })
   # Exceedance Table
   output$exceed_table =  renderDataTable({
-    exceed_data =           excceed %>% filter(UrbanRural == input$landclass,
+    exceed_data =           excceed %>% dplyr::filter(UrbanRural == input$landclass,
                                                Category == input$cat,
-                                               Scale == input$scale) %>% filter(ID %in% input$countryex) %>%
+                                               Scale == input$scale) %>% dplyr::filter(ID %in% input$countryex) %>%
       group_by(ID)
     datatable(exceed_data,
               options = list(scrollX = TRUE),
@@ -345,133 +388,13 @@ server = function(input, output, session) {
     updateSelectInput(
       session,
       "countryex",
-      choices =  excceed %>% filter(
+      choices =  excceed %>% dplyr::filter(
         UrbanRural == input$landclass,
         Category == input$cat,
         Scale == input$scale
       ) %>% dplyr::select(ID)
     )
   })
-
-  # Concentration Graph confidence intervals
-  output$conc_graph_ci = renderPlot({
-    ggplot(
-      concentration %>% dplyr::filter(byvar == input$country_conc) %>% dplyr::filter(Category == input$cat_conc) %>%
-        dplyr::filter(Type == input$type_conc) %>% dplyr::filter(UrbanRural == input$landclass_conc),
-      aes(Year, Mean)
-    ) +        # ggplot2 plot with confidence intervals
-      geom_point() +
-      geom_errorbar(aes(ymin = LowerCI, ymax = UpperCI))
-
-
-  })
-  # Concentration Table
-  output$conc_table =  renderDataTable({
-    concentration_data =   concentration %>% filter(
-      UrbanRural == input$landclass_conc,
-      Category == input$cat_conc,
-      Type == input$type_conc
-    ) %>% filter(byvar %in% input$country_conc) %>%
-      group_by(byvar)
-    datatable(concentration_data,
-              options = list(scrollX = TRUE),
-              escape = FALSE)
-
-  })
-  # Concentraion Graph predictor intervals
-  output$conc_graph_pi = renderPlot({
-    ggplot(
-      concentration %>% dplyr::filter(byvar == input$country_conc) %>% dplyr::filter(Category == input$cat_conc) %>%
-        dplyr::filter(Type == input$type_conc) %>% dplyr::filter(UrbanRural == input$landclass_conc),
-      aes(Year, Mean)
-    ) +        # ggplot2 plot with confidence intervals
-      geom_point() +
-      geom_errorbar(aes(ymin = LowerPI, ymax = UpperPI))
-
-
-  })
-
-  # Filtered df from grid_prediction
-  df_filtered_grid = reactive({
-    grid_prediction %>%
-      dplyr::filter(Year == input$grid_year)
-  })
-  # Concentration Table
-  output$ground_mon_table =  renderDataTable({
-    datatable(df_filtered(),
-              options = list(scrollX = TRUE),
-              escape = FALSE)
-
-  })
-
-  # Leaflet map from grid prediction
-  output$my_leaf = renderLeaflet({
-    data_new = df_filtered() %>% dplyr::select("Longitude", "Latitude",  "Mean")
-
-    r = raster::rasterFromXYZ(data_new)
-    crs(r) = crs(who_world_map)
-
-    leaflet(who_world_map) %>%
-      addProviderTiles(provider = providers$CartoDB.PositronNoLabels) %>%
-      addPolygons(
-        stroke = TRUE,
-        fillOpacity = 0.3,
-        color = "black",
-        weight = 0.5
-      ) %>%
-      addRasterImage(r,  opacity = 0.5, colors = pal) %>%
-      addLegend(pal = pal,
-                values = values(r),
-                title = "Mean Pm2.5 Prediction")
-
-  })
-
-  # Ground monitor reactive data
-  df_filtered = reactive({
-    grid_prediction %>%
-      dplyr::filter(Year == input$ground_year)
-  })
-  # Concentration Table
-  output$grid_pred_table =  renderDataTable({
-    datatable(df_filtered(),
-              options = list(scrollX = TRUE),
-              escape = FALSE)
-
-  })
-  # Leaflet map from grid prediction
-  # output$my_leaf = renderLeaflet({
-  #   data_new = df_filtered() %>% dplyr::select("Longitude", "Latitude",  "Mean")
-  #
-  #   r = raster::rasterFromXYZ(data_new)
-  #   crs(r) = crs(who_world_map)
-  #
-  #   leaflet(who_world_map) %>%
-  #     addProviderTiles(provider = providers$Stamen.TerrainBackground) %>%
-  #     addPolygons(
-  #       stroke = TRUE,
-  #       fillOpacity = 0.3,
-  #       color = "black",
-  #       weight = 0.5
-  #     ) %>%
-  #     addRasterImage(r,  opacity = 0.5, colors = pal) %>%
-  #     addLegend(pal = pal,
-  #               values = values(r),
-  #               title = "Mean Pm2.5 Prediction")
-  #
-  # })
-
-  # observe({
-  #     updateSelectInput(
-  #         session,
-  #         "country_conc",
-  #         choices =  concentration%>% filter(
-  #             UrbanRural == input$landclass_conc,
-  #             Category == input$cat_conc,
-  #             Type == input$type_conc
-  #         ) %>% dplyr::select(byvar)
-  #     )
-  # })
-
   # graph observe
   observe({
     cat = input$cat
@@ -490,22 +413,133 @@ server = function(input, output, session) {
 
   })
 
-  observe({
-    cat_conc = input$cat
+  # Concentration Graph confidence intervals
+  output$conc_graph_ci = renderPlotly({
+    tt1=ggplot(
+      concentration %>% dplyr::filter(byvar == input$country_conc) %>% dplyr::filter(Category == input$cat_conc) %>%
+        dplyr::filter(Type == input$type_conc) %>% dplyr::filter(UrbanRural == input$landclass_conc),
+      aes(Year, Mean)
+    ) +        # ggplot2 plot with confidence intervals
+      geom_point() +
+      geom_errorbar(aes(ymin = LowerCI, ymax = UpperCI))
+    ggplotly(tt1)
 
-    # Can use character(0) to remove all choices
-    if (cat_conc == "Country") {
-      # Can also set the label and select items
-      updateSelectInput(session, "country_conc",
-                        label = paste("Select Country"))
-    } else {
-      updateSelectInput(session, "country_conc",
-                        label = paste("Select Region"))
-    }
+  })
+  # Concentration Table
+  output$conc_table =  renderDataTable({
+    concentration_data =   concentration %>% dplyr::filter(
+      UrbanRural == input$landclass_conc,
+      Category == input$cat_conc,
+      Type == input$type_conc
+    ) %>% dplyr::filter(byvar %in% input$country_conc) %>%
+      group_by(byvar)
+    datatable(concentration_data,
+              options = list(scrollX = TRUE),
+              escape = FALSE)
 
+  })
+   # Concentraion Graph predictor intervals
+  output$conc_graph_pi = renderPlotly({
+    tt2= ggplot(
+      concentration %>% dplyr::filter(byvar == input$country_conc) %>% dplyr::filter(Category == input$cat_conc) %>%
+        dplyr::filter(Type == input$type_conc) %>% dplyr::filter(UrbanRural == input$landclass_conc),
+      aes(Year, Mean)
+    ) +        # ggplot2 plot with confidence intervals
+      geom_point() +
+      geom_errorbar(aes(ymin = LowerPI, ymax = UpperPI))
+    ggplotly(tt2)
 
 
   })
+
+  # observe({
+  #   updateSelectInput(
+  #     session,
+  #     "country_conc",
+  #     choices =    concentration %>% dplyr::filter(byvar == input$country_conc,Category == input$cat_conc,
+  #                                                  Type == input$type_conc,UrbanRural == input$landclass_conc) %>% dplyr::select(byvar)
+  #   )
+  # })
+
+
+  # Concentration Table
+  output$ground_mon_table =  renderDataTable({
+    datatable(df_filtered(),
+              options = list(scrollX = TRUE),
+              escape = FALSE)
+
+  })
+    # pred Table
+  output$grid_pred_table =  renderDataTable({
+    datatable(df_filtered(),
+              options = list(scrollX = TRUE),
+              escape = FALSE)
+
+  })
+  # ground_mon Table
+  output$ground_mon_table =  renderDataTable({
+    datatable(ground_mon_filt(),
+              options = list(scrollX = TRUE),
+              escape = FALSE)
+
+  })
+
+  ##### DATA DOWNLOAD
+  gp16 = grid_prediction %>% dplyr::filter(Year == 2016)
+  output$downloadDataGP2016 = downloadHandler(
+    filename = function() {
+      paste("dimaq-2016-grid-predictions", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      write.csv(gp16, file)
+    }
+  )
+  gp15 = grid_prediction %>% dplyr::filter(Year == 2015)
+  output$downloadDataGP2015 = downloadHandler(
+    filename = function() {
+      paste("dimaq-2015-grid-predictions", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      write.csv(gp15, file)
+    }
+  )
+  gp14 = grid_prediction %>% dplyr::filter(Year == 2014)
+  output$downloadDataGP2014 = downloadHandler(
+    filename = function() {
+      paste("dimaq-2014-grid-predictions", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      write.csv(gp14, file)
+    }
+  )
+  gp13 = grid_prediction %>% dplyr::filter(Year == 2013)
+  output$downloadDataGP2013 = downloadHandler(
+    filename = function() {
+      paste("dimaq-2013-grid-predictions", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      write.csv(gp13, file)
+    }
+  )
+  gp12 = grid_prediction %>% dplyr::filter(Year == 2012)
+  output$downloadDataGP2012 = downloadHandler(
+    filename = function() {
+      paste("dimaq-2012-grid-predictions", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      write.csv(gp12, file)
+    }
+  )
+  gp11 = grid_prediction %>% dplyr::filter(Year == 2011)
+  output$downloadDataGP2011 = downloadHandler(
+    filename = function() {
+      paste("dimaq-2011-grid-predictions", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      write.csv(gp11, file)
+    }
+  )
+
 }
 
 #################################################################
