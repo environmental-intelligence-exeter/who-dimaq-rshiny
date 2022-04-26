@@ -106,17 +106,16 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
         #  Inputs excluded for brevity
         sidebarPanel(
           selectInput(
+            inputId = "scale",
+            choices = unique(excceed$Scale),
+            selected = "10",
+            label = "Scale"
+          ),
+          selectInput(
             inputId = "cat",
             choices = unique(excceed$Category),
             selected = "Country",
             label = "Country or Region"
-          ),
-          selectizeInput(
-            inputId = "countryex",
-            label = "Select a country",
-            choices = unique(excceed$ID),
-            selected = sample(countries, 1),
-            multiple = TRUE
           ),
           selectInput(
             inputId = "landclass",
@@ -124,11 +123,12 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
             selected = "Overall",
             label = "Urban | Rural"
           ),
-          selectInput(
-            inputId = "scale",
-            choices = unique(excceed$Scale),
-            selected = "10",
-            label = "Scale"
+          selectizeInput(
+            inputId = "countryex",
+            label = "Select a country",
+            choices = unique(excceed$ID),
+            selected = sample(countries, 1),
+            multiple = TRUE
           ),
           downloadButton("datadownloadex", "Download Data", class = "butt")
 
@@ -153,16 +153,16 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
         #  Inputs excluded for brevity
         sidebarPanel(
           selectInput(
+            inputId = "type_conc",
+            choices = unique(concentration$Type),
+            selected = "Population-weighted concentration",
+            label = "Type"
+          ),
+          selectInput(
             inputId = "cat_conc",
             choices = unique(concentration$Category),
             selected = "Unweighted WHO Region",
             label = "Country or Region"
-          ),
-          selectizeInput(
-            inputId = "country_conc",
-            label = "Select a country",
-            choices = unique(concentration$byvar),
-            selected = "AFRO"
           ),
           selectInput(
             inputId = "landclass_conc",
@@ -170,11 +170,11 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
             selected = "Overall",
             label = "Urban | Rural"
           ),
-          selectInput(
-            inputId = "type_conc",
-            choices = unique(concentration$Type),
-            selected = "Population-weighted concentration",
-            label = "Type"
+          selectizeInput(
+            inputId = "country_conc",
+            label = "Select a country",
+            choices = unique(concentration$byvar),
+            selected = "AFRO"
           ),
           downloadButton("datadownloadconc", "Download Data", class = "butt")
 
@@ -182,8 +182,8 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
         ),
 
         mainPanel(tabsetPanel(
-          tabPanel("Prediction Interval", plotlyOutput(outputId ="conc_graph_ci")),
-          tabPanel("Confidence Interval", plotlyOutput(outputId ="conc_graph_pi")),
+          tabPanel("Prediction Interval", plotlyOutput(outputId ="conc_graph_ci")%>% withSpinner(type = 6, color = "#009CDE")),
+          tabPanel("Confidence Interval", plotlyOutput(outputId ="conc_graph_pi")%>% withSpinner(type = 6, color = "#009CDE")),
           tabPanel("Table", dataTableOutput("conc_table"))
 
         ))
@@ -255,7 +255,7 @@ header.append('<div style=\"float:right\"><a href=\"URL\"><img src=\"who.png\" a
                                     <!-- Footer -->
                                            <footer class='page-footer font-large indigo'>
                                            <!-- Copyright -->
-                                           <a  style='text-align:centre !important;color:white !important' href='https://mdbootstrap.com/education/bootstrap/
+                                           <a  style='text-align:centre !important;color:white !important;margin-top:2em !important' href='https://mdbootstrap.com/education/bootstrap/
                                            <div style=';background-color:#009CDE;'><p style='text-align:center;position:sticky;bottom:0'> Built by the Environmental Intelligence CDT, Exeter University </p></a>
                                            </div>
                                            <!-- Copyright -->
@@ -387,7 +387,11 @@ server = function(input, output, session) {
     updateSelectInput(
       session,
       "countryex",
-      choices =  exceed_data_d()
+      choices =  excceed %>% dplyr::filter(
+        UrbanRural == input$landclass,
+        Category == input$cat,
+        Scale == input$scale
+      ) %>% dplyr::select(ID)
     )
   })
   # graph observe
@@ -441,16 +445,22 @@ server = function(input, output, session) {
 
   })
 
-  # observe({
-  #   updateSelectInput(
-  #     session,
-  #     "country_conc",
-  #     choices =    concentration %>% dplyr::filter(byvar == input$country_conc,Category == input$cat_conc,
-  #                                                  Type == input$type_conc,UrbanRural == input$landclass_conc) %>% dplyr::select(byvar)
-  #   )
-  # })
-
-
+  observe({
+    updateSelectInput(
+      session,
+      "cat_conc",
+      choices =    concentration %>% dplyr::filter(Type == input$type_conc,
+                                                   UrbanRural == input$landclass_conc) %>% dplyr::select(Category)
+    )
+  })
+  observe({
+    updateSelectInput(
+      session,
+      "country_conc",
+      choices =     concentration %>% dplyr::filter(Type == input$type_conc, Category == input$cat_conc,
+                                                    UrbanRural == input$landclass_conc) %>% dplyr::select(byvar)
+    )
+  })
 
   # pred Table
   output$grid_pred_table =  renderDataTable({
